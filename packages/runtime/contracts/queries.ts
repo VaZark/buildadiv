@@ -38,6 +38,8 @@ export interface CacheEntry {
   freshTimer?: ReturnType<typeof setTimeout>;
   unusedTimer?: ReturnType<typeof setTimeout>;
   inflight?: Promise<ActionResult> | null;
+  /** Explicit arguments of the in-flight request; undefined when it chose its own page. */
+  inflightArgs?: unknown;
 }
 
 /** Mutation effects and timers refetch through this coordinator boundary. */

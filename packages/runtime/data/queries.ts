@@ -3,9 +3,10 @@ import type { ActionResult } from '../contracts/results.js';
 import type { CacheEntry, Subscriber } from '../contracts/queries.js';
 import { executeRequest } from '../actions/request.js';
 import { isProviderMethod } from '../actions/methods.js';
-import { getEntry, notify } from './entries.js';
+import { deliver, getEntry, notify } from './entries.js';
 import { restore } from './persistence.js';
 import { scheduleFresh, scheduleUnused } from './lifetime.js';
+import { serializeArgs } from './policies.js';
 
 /** Mount a listener and load its query; the returned cleanup releases its reference. */
 export function subscribe<Args, Data>(
@@ -16,7 +17,7 @@ export function subscribe<Args, Data>(
   const entry = getEntry(fn as Action, args);
   clearTimeout(entry.unusedTimer);
   entry.listeners.add(listener);
-  if (entry.result) listener(entry.result, entry);
+  if (entry.result) deliver(listener, entry.result, entry);
   load(entry, args, { initial: true });
   return () => {
     entry.listeners.delete(listener);
@@ -26,7 +27,12 @@ export function subscribe<Args, Data>(
     }
   };
 }
-/** Deduplicate concurrent callers, restore storage first, and resolve page parameters. */
+/**
+ * Deduplicate concurrent callers, restore storage first, and resolve page parameters.
+ * A call without arguments joins any in-flight request. Explicit arguments join
+ * only a request for the same arguments; otherwise they wait and then run, so
+ * selecting another page while one loads is never silently dropped.
+ */
 export async function load(
   entry: CacheEntry,
   args?: unknown,
@@ -36,9 +42,14 @@ export async function load(
     background = false,
   }: { initial?: boolean; force?: boolean; background?: boolean } = {},
 ): Promise<ActionResult> {
-  if (entry.inflight) return entry.inflight;
+  while (entry.inflight) {
+    if (args === undefined || serializeArgs(args) === serializeArgs(entry.inflightArgs))
+      return entry.inflight;
+    await entry.inflight.catch(() => undefined);
+  }
+  entry.inflightArgs = args;
   // Install the promise before awaiting storage: concurrent mounts deduplicate restores and fetches.
-  entry.inflight = (async () => {
+  const request = (entry.inflight = (async () => {
     await restore(entry);
     const fresh =
       entry.result &&
@@ -69,13 +80,26 @@ export async function load(
         : args,
       { entry, background, refetch: refresh },
     );
-  })();
+  })());
   try {
-    return await entry.inflight;
+    return await request;
   } finally {
-    entry.inflight = null;
+    // A waiting caller may already have started the next request.
+    if (entry.inflight === request) {
+      entry.inflight = null;
+      entry.inflightArgs = undefined;
+    }
     if (!entry.listeners.size) scheduleUnused(entry);
   }
+}
+/**
+ * An explicit user request (a `data-action` trigger) wants current data, so it
+ * bypasses freshness for ordinary queries. Paginated queries instead advance to
+ * their next page, which is never served from the freshness check.
+ */
+export function reload(fn: Action): Promise<ActionResult> {
+  const entry = getEntry(fn);
+  return load(entry, undefined, { force: !entry.fn.options.paginated });
 }
 /** Refetch only mounted queries and the permitted window of infinite pages. */
 export async function refresh(entry: CacheEntry): Promise<ActionResult | void> {

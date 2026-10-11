@@ -101,3 +101,32 @@ test('invalidation during an in-flight query schedules a fresh request', async (
   off();
   reset();
 });
+test('item ids read from data-key strings match numeric cached ids', async () => {
+  reset();
+  let listCalls = 0;
+  globalThis.fetch = async (url) => {
+    if (url === '/list') listCalls++;
+    return url === '/list'
+      ? new Response('[{"id":42,"name":"Hat"}]')
+      : new Response(url === '/rename' ? '{"id":"42","name":"Cap"}' : null, {
+          status: url === '/rename' ? 200 : 204,
+        });
+  };
+  const load = named(provider({ url: '/list', provides: { tag: 'Item', key: 'id' } }));
+  const off = subscribe(load, () => {});
+  await load();
+  const rename = named(mutation({ url: '/rename', reconciles: { tag: 'Item', key: 'id' } }));
+  await rename();
+  assert.deepEqual(getEntry(load).result!.response, [{ id: '42', name: 'Cap' }]);
+  const remove = named(
+    mutation<{ id: string }>({
+      method: 'DELETE',
+      url: (args) => '/item/' + args.id,
+      invalidates: { tag: 'Item', id: (args) => args.id },
+    }),
+  );
+  await remove({ id: '42' });
+  assert.equal(listCalls, 2);
+  off();
+  reset();
+});

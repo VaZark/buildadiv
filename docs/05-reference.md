@@ -94,7 +94,7 @@ Principle 8: every customizable behavior is a function with a default.
 | `items` | `(response) => array of objects` | the response itself |
 | `merge` | `(cached, page) => merged` | concatenate (infinite) or replace (pages) |
 | `sort` | `(a, b) => number`, after each upsert | `null` (new items at the end) |
-| `context` | `(response, status, args) => extra fields` | no extra fields |
+| `context` | `(response, status, args) => extra fields`, every state (`response` may be `null`) | no extra fields |
 | `send` | `(body) => { body, headers }` | `multipart` for forms |
 | `accepts` | `(response: Response) => Promise<data>` | `json` |
 | `nextPage` | `(response, page) => next param \| null` | required when paginated |
@@ -120,7 +120,7 @@ Defined once in `shared`; used by runtime bindings and build-time `{{ }}`.
 | Filter | Availability |
 |---|---|
 | `fallback:'text'` | Always available |
-| `currency:CODE`, `number`, `percent`, `date:style`, `relative-time` | Provided, opt-in (`Intl`, locale from `<html lang>`) |
+| `currency:CODE`, `number`, `percent`, `date:style`, `relativeTime:unit` | Provided, opt-in (`Intl`, locale from `<html lang>`) |
 | `upper`, `lower`, `truncate:n` | Provided, opt-in |
 | custom | Any function registered via `configure({ filters })` |
 

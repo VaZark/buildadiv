@@ -1,4 +1,7 @@
+import type { Action } from '../contracts/actions.js';
 import { settings } from '../configuration/settings.js';
+import { readsQueries } from '../actions/methods.js';
+import { reload } from '../data/queries.js';
 
 const delegatedEvents = new Set<string>();
 /** One capturing listener per trigger supports current and later-inserted action elements. */
@@ -25,6 +28,8 @@ function delegate(type: string): void {
             (event as SubmitEvent).submitter as HTMLElement | null,
           ),
         );
+      // A clicked provider is an explicit refresh (or "load more"), not a cached read.
+      else if (readsQueries(fn.options)) reload(fn as Action);
       else fn();
     },
     true,

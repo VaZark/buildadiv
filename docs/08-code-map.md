@@ -36,7 +36,7 @@ use the emitted `.js` paths. Internal modules import domain contracts directly.
 | `data/policies.ts`                                       | HTTP freshness, argument keys and exported merge defaults | Runtime unit `policies.test.ts`                                         |
 | `data/persistence.ts`, root `stores.ts`                  | Restore/save and browser storage adapters                 | Runtime unit `persistence.test.ts`; browser `runtime/storage.spec.ts`   |
 | `data/pagination.ts`                                     | Page aggregation and tail cursor                          | Runtime unit `pagination.test.ts`; browser `runtime/pagination.spec.ts` |
-| `data/tags.ts`                                           | Invalidation and reconciliation                           | Runtime unit `tags.test.ts`; browser action/rendering tests             |
+| `data/tags.ts`, `keys.ts`                                | Invalidation, reconciliation and id matching              | Runtime unit `tags.test.ts`; browser action/rendering tests             |
 | `dom/bindings.ts`, `element.ts`                          | Keyed nodes, bindings, slots and state templates          | Browser `runtime/rendering.spec.ts`                                     |
 | `dom/triggers.ts`, `configuration/settings.ts`           | Declarative triggers and named module registration        | Browser `runtime/actions.spec.ts`                                       |
 

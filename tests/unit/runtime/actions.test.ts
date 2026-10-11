@@ -32,3 +32,43 @@ test('no-content, empty arrays, errors and timeout are distinct states', async (
   assert.equal((await named(provider({ url: '/', timeout: 0.001 }))()).context.error, true);
   reset();
 });
+test('context functions run in every state; a throwing context never blocks the request', async () => {
+  reset();
+  let fail = false;
+  globalThis.fetch = async () =>
+    new Response(fail ? 'failed' : '{"page":1,"pages":2}', { status: fail ? 500 : 200 });
+  const seen: unknown[] = [];
+  const load = named(
+    provider<unknown, { page: number; pages: number }>({
+      url: '/paged',
+      context: (response, status) => {
+        seen.push(status ?? null);
+        return { hasMore: Boolean(response && response.page < response.pages) };
+      },
+    }),
+  );
+  const success = await load();
+  assert.equal(success.context.hasMore, true);
+  fail = true;
+  const failed = await named(provider({ url: '/other', context: () => ({ seen: true }) }))();
+  assert.equal(failed.context.error, true);
+  assert.equal(failed.context.seen, true);
+  assert.deepEqual(seen, [null, 200]);
+
+  fail = false;
+  const reported: unknown[] = [];
+  const log = console.error;
+  console.error = (error: unknown) => reported.push(error);
+  const careless = named(
+    provider<unknown, { page: number }>({
+      url: '/careless',
+      context: (response) => ({ page: response!.page }),
+    }),
+  );
+  const result = await careless();
+  console.error = log;
+  assert.equal(result.context.success, true);
+  assert.equal(result.context.page, 1);
+  assert.equal(reported.length, 1);
+  reset();
+});

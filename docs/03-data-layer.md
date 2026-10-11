@@ -124,6 +124,7 @@ export const deleteProduct = mutation({
 | `{ tag, id: fn }` | Clear one item; id computed from args |
 
 - If the id can't be found, the **whole tag** is cleared.
+- Ids match by value: a number and its string form are the same id, so `dataset.key` (always a string) identifies a numeric `id`. The same rule applies to `reconciles`.
 - Mounted queries refetch; unmounted data is never fetched. Changes apply per `data-key`, so only changed items re-render.
 - Paginated queries refetch according to their mode ([02](02-rendering-and-actions.md#pagination)).
 - By default old content stays until fresh data arrives. `onInvalidate: 'pending'` on a provider shows the `on-pending` template during the refetch instead.

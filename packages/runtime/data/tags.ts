@@ -7,6 +7,7 @@ import { resultFor } from '../actions/results.js';
 import { cache, notify } from './entries.js';
 import { persist, removePersisted } from './persistence.js';
 import { defaultItems } from './policies.js';
+import { sameKey } from './keys.js';
 
 /** Read tag items from raw responses rather than template-specific context. */
 function itemsFor(entry: CacheEntry): unknown[] {
@@ -36,7 +37,7 @@ export async function invalidate(
       if (
         id != null &&
         Array.isArray(items) &&
-        !items.some((item) => resolvePath(item, entry.fn.options.provides!.key) === id)
+        !items.some((item) => sameKey(resolvePath(item, entry.fn.options.provides!.key), id))
       )
         continue;
       entry.invalidated = true;
@@ -79,7 +80,7 @@ export async function reconcile(
       return;
     }
     const key = entry.fn.options.provides.key;
-    const index = items.findIndex((existing) => resolvePath(existing, key) === id);
+    const index = items.findIndex((existing) => sameKey(resolvePath(existing, key), id));
     if (index < 0) items.push(item);
     else items[index] = item;
     if (entry.fn.options.sort) items.sort(entry.fn.options.sort);
@@ -88,7 +89,7 @@ export async function reconcile(
       let found = false;
       for (const page of entry.pages) {
         const pageItems = (entry.fn.options.items || defaultItems)(page.response);
-        const position = pageItems.findIndex((existing) => resolvePath(existing, key) === id);
+        const position = pageItems.findIndex((existing) => sameKey(resolvePath(existing, key), id));
         if (position >= 0) {
           pageItems[position] = item;
           found = true;

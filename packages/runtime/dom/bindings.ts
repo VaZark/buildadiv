@@ -13,6 +13,7 @@ import { resolvePath, truthy } from '../../shared/path.js';
 import { evaluate } from '../../shared/pipeline.js';
 import { fillSlots } from '../../shared/slots.js';
 import { settings } from '../configuration/settings.js';
+import { sameKey } from '../data/keys.js';
 
 const initialDisplay = new WeakMap<HTMLElement, string>();
 const nestedLists = new WeakMap<HTMLTemplateElement, TemplateRenderer>();
@@ -188,7 +189,7 @@ export class TemplateRenderer {
               Array.isArray(pageItems) &&
               pageItems.some((candidate) =>
                 template.dataset.key
-                  ? resolvePath(candidate, template.dataset.key) === key
+                  ? sameKey(resolvePath(candidate, template.dataset.key), key)
                   : candidate === item,
               )
             );

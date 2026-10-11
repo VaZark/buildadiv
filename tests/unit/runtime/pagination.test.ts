@@ -41,3 +41,24 @@ test('pagination merges, selects explicit pages, and refreshes only current and 
   off();
   reset();
 });
+test('selecting a page while another page loads fetches both in order', async () => {
+  reset();
+  const calls: string[] = [];
+  globalThis.fetch = async (url) => {
+    calls.push(String(url));
+    await new Promise((resolve) => setTimeout(resolve, 5));
+    return new Response(JSON.stringify([{ id: Number(String(url).slice(1)) }]));
+  };
+  const load = named(
+    provider<number, { id: number }[]>({
+      url: (page) => '/' + page,
+      paginated: { mode: 'pages', firstPage: 1, nextPage: (_response, page) => page + 1 },
+    }),
+  );
+  const [second, fifth, again] = await Promise.all([load(2), load(5), load(5)]);
+  assert.deepEqual(calls, ['/2', '/5']);
+  assert.deepEqual(second.response, [{ id: 2 }]);
+  assert.deepEqual(fifth.response, [{ id: 5 }]);
+  assert.equal(again, fifth);
+  reset();
+});

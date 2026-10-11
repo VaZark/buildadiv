@@ -124,3 +124,30 @@ test('disconnect releases subscriptions; remount restores cached data', async ({
   await expect(page.locator('#products li strong').nth(1)).toHaveText('Imported hat');
   expect(errors).toEqual([]);
 });
+
+test('a provider trigger refetches fresh data; render failures leave the request successful', async ({
+  page,
+  request,
+}) => {
+  const errors = await setup(page, request);
+  await page.evaluate(() => {
+    window.events = [];
+    for (const event of ['success', 'error'])
+      document.addEventListener('loadProducts:' + event, () => window.events.push(event));
+  });
+  await mount(
+    page,
+    `<button id="refresh" data-action="loadProducts">Refresh products</button>
+    <template data-component="duplicate-rows" data-accepts="array" data-item="row" data-key="missing">
+      <li data-bind="row.name">Row</li>
+    </template>
+    <render-template id="broken" subscribe-to-action="loadProducts" on-success="duplicate-rows"></render-template>`,
+  );
+  await page.locator('#refresh').click();
+  await expect
+    .poll(async () => (await (await request.get('/api/calls')).json())['/api/products'])
+    .toBe(2);
+  await expect(page.locator('#products li')).toHaveCount(2);
+  expect(await page.evaluate(() => window.events)).toEqual(['success']);
+  expect(errors).toContain('List keys must be unique');
+});

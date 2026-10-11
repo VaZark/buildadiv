@@ -51,3 +51,26 @@ test('distinct argument caches, QUERY bodies and age-based refetch are independe
   assert.ok(calls.filter((call) => call.url === '/timed').length >= 2);
   reset();
 });
+test('a failing subscriber is reported without changing the request outcome', async () => {
+  reset();
+  globalThis.fetch = async () => new Response('[{"id":1}]');
+  const reported: unknown[] = [];
+  const log = console.error;
+  console.error = (error: unknown) => reported.push(error);
+  const load = named(provider({ url: '/' }));
+  const seen: string[] = [];
+  const offBroken = subscribe(load, (result) => {
+    if (result.context.success) throw new Error('render failed');
+  });
+  const offHealthy = subscribe(load, (result) => {
+    if (!result.context.pending) seen.push(result.context.success ? 'success' : 'error');
+  });
+  const result = await load();
+  console.error = log;
+  assert.equal(result.context.success, true);
+  assert.deepEqual(seen, ['success']);
+  assert.equal(reported.length, 1);
+  offBroken();
+  offHealthy();
+  reset();
+});

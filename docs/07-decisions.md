@@ -54,6 +54,9 @@ What was decided, grouped by topic, and what each decision replaced. When a deci
 | `send` / `accepts` are functions; `json`, `text`, `multipart`, `urlencoded` built in; other formats by convention | String formats and registered decoders |
 | Events are `functionName:event`, with no HTTP method. States reuse `<render-template>` names; lifecycle follows htmx 4 (`before:`, `after:`, `finally:`) | `METHOD:fn:phase` with `pre-request` / `sent` / `received` / `failed` / `timed-out` |
 | Action names are unique across the project | n/a |
+| The action's `context` function runs in every state and may receive `response: null`; a throwing `context` is reported and adds no fields | A throwing `context` aborting the request with an unhandled rejection |
+| A `data-action` on a non-paginated provider forces a refetch; JS calls read through the cache | Triggers silently returning fresh cached data |
+| A subscriber or render failure is reported (`reportError`) and does not change the request's state or events | Render exceptions turning a successful request into `error` |
 
 ## Data layer
 
@@ -65,6 +68,8 @@ What was decided, grouped by topic, and what each decision replaced. When a deci
 | `invalidates`: `'Tag'` or `['A', 'B']` (whole tags), `{ tag, key }` (one item from the response), `{ tag, id: fn }` (one item from args). A missing id clears the whole tag | `invalidates: 'Product'` only |
 | `reconciles` is an upsert and always takes `{ tag, key }`; the upserted item is the object holding the key. New items land at the end; an optional `sort` comparator (default `null`) re-sorts | `reconciles: 'Product'`; `onReconcileFailure` |
 | A failed reconcile falls back to invalidating the whole tag | A configurable `retry` / `ignore` |
+| Tag ids match by value (`42` equals `'42'`) so DOM `data-key` strings identify cached items | Strict `===` comparison |
+| An explicit page argument never joins an in-flight request for a different page | Dropping the request while another page loads |
 | No optimistic updates. `onInvalidate: 'pending'` is opt-in | n/a |
 | Cache: in memory, keyed by action + args, reference-counted by mounted elements | n/a |
 | `refetchAfter` and `keepUnusedFor` are separate options. Both default to `respectCacheOr(Infinity)`: follow HTTP caching headers, and never expire on age without them. `respectCacheOr` is the only form; passing it is an override | Defaults of `Infinity` or 60 s; a bare `respectCache` |

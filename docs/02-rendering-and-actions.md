@@ -92,6 +92,7 @@ export const addToCart = mutation({ method: 'POST', url: '/api/cart' });
 - `data-action` names the function. That's all the element knows.
 - The event defaults to `click`, or `submit` on forms. `data-on="…"` overrides it (`load`, `change`, …).
 - Actions are plain functions, so `onclick="loadCart()"` or an HTMX hook works too.
+- A `data-action` on a provider is an explicit refresh: it refetches even when cached data is still fresh (a paginated provider loads its next page instead). Calling a provider from JS reads through the cache like any other caller.
 
 **Arguments.** `data-action` never passes arguments (a form sends its fields as the body). When an action needs arguments, call it from a regular event handler:
 
@@ -129,7 +130,7 @@ Every template rendered from an action receives **one object**:
 export const loadProducts = provider({
   url: '/api/products',
   context: (response, status, args) => ({
-    hasMore: response.page < response.pages,
+    hasMore: Boolean(response && response.page < response.pages),
     isFiltered: Boolean(args?.category),
   }),
 });
@@ -143,6 +144,7 @@ export const loadProducts = provider({
 - **This is where logic goes.** Comparisons, OR conditions and derived values become plain fields that templates test with `data-if`.
 - The runtime doesn't interpret responses; the `context` function does, in plain JS.
 - Built-in names are reserved; the function can't override them.
+- The `context` function runs in **every state**, with `response` set to `null` while pending, after an error and for no content. Its fields are yours; the runtime doesn't check their shape. A `context` function that throws is reported as an uncaught error and adds no fields; the request carries on.
 - Because `context` always exists, `on-pending` and `on-error` templates always have something to read.
 - Fixtures mirror `{ response, context }`.
 
@@ -273,7 +275,7 @@ listeners support elements inserted later. Form submission uses `FormData`, incl
 the submitter; a normal JavaScript call passes its argument as the request body.
 
 Pagination calls without arguments load the next page (the first on initial load).
-Explicit arguments select a page. Infinite providers share a page sequence;
+Explicit arguments select a page; selecting a different page while one loads waits for it, then loads the requested page. Infinite providers share a page sequence;
 nonpaginated providers cache distinct JSON-serializable arguments separately.
 The exported default `mergeInfinite` concatenates arrays and `mergePages` replaces
 the response; use `merge` for envelopes. Infinite array rows carry page markers

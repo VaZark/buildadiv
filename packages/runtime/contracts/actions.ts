@@ -9,6 +9,7 @@ type ItemOf<Data> = Data extends readonly (infer Item)[] ? Item : unknown;
 /** Every HTTP action can supply request/response behavior and template context. */
 export interface RequestOptions<Args = unknown, Data = unknown> {
   url: string | ((args: Args) => string);
+  /** Runs in every state; the response is null while pending, after errors and for no content. */
   context?: (
     response: Data | null,
     status: number | undefined,

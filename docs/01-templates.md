@@ -153,9 +153,9 @@ configure({ filters: { currency, number, upper, slugify } });
 | Filter | Availability |
 |---|---|
 | `fallback:'text'` | Always available |
-| `currency:EUR`, `number`, `percent`, `date:long`, `relative-time` | Provided, opt-in. `Intl`-based, locale from `<html lang>` |
+| `currency:EUR`, `number`, `percent`, `date:long`, `relativeTime:day` | Provided, opt-in. `Intl`-based, locale from `<html lang>` |
 | `upper`, `lower`, `truncate:40` | Provided, opt-in |
-| Your own | Register any function; the key is its name in HTML |
+| Your own | Register any function; the key is its name in HTML (`{ 'relative-time': relativeTime }` would rename one) |
 
 - Using a filter that isn't registered is an **error** the editor and linter flag, not a silent no-op.
 
