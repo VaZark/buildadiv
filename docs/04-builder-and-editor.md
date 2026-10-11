@@ -105,7 +105,12 @@ packages/
   `npm run validate:architecture` enforces both.
 - A filter or slot rule is written once in `shared`, so it's guaranteed to behave the same at build time and in the browser.
 - **`shared` is private.** Each product's `vp pack` build inlines the shared code it
-  uses, so users install one package with no internal dependencies:
+  uses, so users install one package with no internal dependencies. That's why
+  `@buildadiv/shared` is a **`devDependency`** of each product even though its code
+  runs at runtime: it's needed to *build* the package, and is already inside the
+  published file. As a `dependency` it would be left external (the published file
+  would import it) and npm would try to install a package that is never published.
+  The packaging test checks it never appears in a product's `dependencies`.
   - `@buildadiv/query-template` publishes `lib/query-template.min.js` (+ typings), one
     minified ES module with **no dependencies**. It re-exports the filters, so projects
     import everything from one place.

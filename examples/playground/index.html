@@ -129,14 +129,14 @@
       <ul class="rows">
         <use-template subscribe="loadCalls" on-success="call-rows"></use-template>
       </ul>
-      <button data-action="loadCalls">Refresh counts</button>
-      <button data-action="resetDemo">Reset demo data</button>
+      <button class="secondary" data-action="loadCalls">Refresh counts</button>
+      <button class="secondary" data-action="resetDemo">Reset demo data</button>
       <h2>Document events</h2>
-      <button id="clear-log">Clear</button>
+      <button class="secondary" id="clear-log">Clear</button>
       <ol id="event-log" reversed></ol>
     </aside>
 
-    <template data-component="loading"><p class="muted">Loading…</p></template>
+    <template data-component="loading"><p class="muted" aria-busy="true">Loading…</p></template>
     <template data-component="product-names" data-accepts="array" data-item="product" data-key="id">
       <li>
         <span data-bind="product.name">Product name</span>
@@ -146,7 +146,7 @@
     <template data-component="product-rows" data-accepts="array" data-item="product" data-key="id">
       <li>
         <span data-bind="product.name">Product name</span>
-        <button class="delete">Delete</button>
+        <button class="delete danger">Delete</button>
       </li>
     </template>
     <template data-component="page-rows" data-accepts="array" data-item="row" data-key="id">

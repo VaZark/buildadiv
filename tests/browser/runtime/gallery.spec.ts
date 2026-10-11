@@ -95,6 +95,32 @@ test('the runtime gallery demonstrates every state and pattern it describes', as
   await expect(note.locator('h3')).toHaveText('Filled from .data');
   await expect(note).toContainText('By You');
 
+  // 7 · Filters: every pipeline's result, formatted for <html lang="en">.
+  const results = await page.locator('#filters td.result').allTextContents();
+  expect(results).toEqual([
+    '€1,234.50',
+    '$1,234.50',
+    '9,876,543',
+    '26%',
+    'Jan 15, 2025',
+    'January 15, 2025',
+    'yesterday',
+    'in 5 minutes',
+    'ADA LOVELACE',
+    'ada lovelace',
+    'Lovely scarf, arrived q…',
+    'no nickname',
+    '—',
+    'ADA LOV…',
+    'AL',
+  ]);
+  const profile = page.locator('#filters a.profile');
+  await expect(profile).toHaveAttribute('href', 'https://example.com/ada');
+  await expect(profile).toHaveAttribute('title', 'ADA LOVELACE');
+  // The link shows the filtered URL it points to, next to the raw value from the data.
+  await expect(profile).toHaveText('https://example.com/ada');
+  await expect(page.locator('#filters')).toContainText('HTTPS://EXAMPLE.COM/Ada');
+
   // The page runs on the standalone runtime file alone.
   expect(requested).toContain('/lib/query-template.min.js');
   expect(requested.some((path) => path.startsWith('/packages/'))).toBe(false);

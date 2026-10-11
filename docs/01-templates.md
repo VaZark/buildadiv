@@ -154,14 +154,24 @@ import { slugify } from './my-filters.js';   // a project's own filter is just a
 configure({ filters: { currency, number, upper, slugify } });
 ```
 
-| Filter | Availability |
-|---|---|
-| `fallback:'text'` | Always available |
-| `currency:EUR`, `number`, `percent`, `date:long`, `relativeTime:day` | Provided, opt-in. `Intl`-based, locale from `<html lang>` |
-| `upper`, `lower`, `truncate:40` | Provided, opt-in |
-| Your own | Register any function; the key is its name in HTML (`{ 'relative-time': relativeTime }` would rename one) |
+| Filter | Arguments (default) | Example → result (`<html lang="en">`) | Notes |
+|---|---|---|---|
+| `fallback` | text (`''`) | `nickname \| fallback:'none'` → `none` | Always available. Replaces only `null`, `undefined` and `''`; keeps `0` and `false` |
+| `currency` | ISO code (`USD`) | `1234.5 \| currency:EUR` → `€1,234.50` | An unknown code throws |
+| `number` | none | `9876543 \| number` → `9,876,543` | |
+| `percent` | none | `0.256 \| percent` → `26%` | The value is a fraction |
+| `date` | `full`, `long`, `medium`, `short` (`medium`) | `'2025-01-15T12:00' \| date:long` → `January 15, 2025` | Invalid dates or styles throw |
+| `relativeTime` | unit (`second`) | `-1 \| relativeTime:day` → `yesterday` | The value is a signed offset in that unit |
+| `upper`, `lower` | none | `'Ada' \| upper` → `ADA` | Locale-aware (`tr`: `i` → `İ`) |
+| `truncate` | length (`40`) | `'abcdef' \| truncate:4` → `abc…` | Length includes the `…`; never parses markup |
+| your own | anything | `name \| initials` → `AL` | Any `(value, ...args) => value` function |
 
-- Using a filter that isn't registered is an **error** the editor and linter flag, not a silent no-op.
+- Formatting filters use `Intl` with the locale from `<html lang>`, so a page's language changes its numbers and dates without configuration.
+- **Missing values pass through** every provided filter unchanged, so `fallback` can come last: `nickname | upper | fallback:'—'`.
+- **Arguments** are literals: numbers (`truncate:4`), bare words (`currency:EUR`) or quoted strings, which may contain `|` and `:` (`fallback:'a|b'`; `\'` escapes a quote).
+- **Your own filters** should do the same: one value in, one value out, and return `null` / `undefined` unchanged. Register them under the name used in HTML (`{ initials }`, or `{ 'relative-time': relativeTime }` to rename one). Lookups use only the registered keys, so names like `toString` never reach built-in methods.
+- Using a filter that isn't registered is an **error**, not a silent no-op: at runtime the render throws `Unregistered filter: name`, and the build fails the same way.
+- The runtime gallery's *Filters* section (`examples/runtime/`) shows every filter live, next to its pipeline.
 
 ## Missing values
 

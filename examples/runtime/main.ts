@@ -1,8 +1,31 @@
-import { configure, currency } from '/lib/query-template.min.js';
+import {
+  configure,
+  currency,
+  date,
+  lower,
+  number,
+  percent,
+  relativeTime,
+  truncate,
+  upper,
+} from '/lib/query-template.min.js';
 import type { UseTemplate } from '/lib/query-template.min.js';
 import * as actions from './api/gallery.js';
 
-configure({ actions: { ...actions }, filters: { currency } });
+/** A project's own filter is any single-value function; its key is its name in HTML. */
+const initials = (value: unknown): unknown =>
+  value == null
+    ? value
+    : String(value)
+        .split(/\s+/)
+        .map((word) => word[0])
+        .join('');
+
+// Filters are opt-in: register the provided ones this page uses, plus its own.
+configure({
+  actions: { ...actions },
+  filters: { currency, number, percent, date, relativeTime, upper, lower, truncate, initials },
+});
 
 /**
  * Actions that need arguments are called from ordinary listeners. The id comes
@@ -25,3 +48,15 @@ document.querySelector('#fill-note')!.addEventListener('click', () => {
     author: 'You',
   };
 });
+
+// The filter table is a direct template too; its data is plain values to format.
+document.querySelector<UseTemplate>('#filter-examples')!.data = {
+  order: { total: 1234.5 },
+  stock: 9876543,
+  discount: 0.256,
+  shipped: '2025-01-15T12:00:00',
+  daysAgo: -1,
+  minutesLeft: 5,
+  customer: { name: 'Ada Lovelace', nickname: null, profile: 'HTTPS://EXAMPLE.COM/Ada' },
+  review: 'Lovely scarf, arrived quickly and well packed.',
+};

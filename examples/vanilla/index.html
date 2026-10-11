@@ -47,10 +47,10 @@
         <span data-bind="product.price | currency:EUR">€0.00</span>
         <span data-if="product.inStock">In stock</span
         ><span data-if-not="product.inStock">Sold out</span>
-        <button class="local">Local button</button>
+        <button class="local secondary">Local button</button>
       </li>
     </template>
-    <template data-component="pending"><p>Loading…</p></template>
+    <template data-component="pending"><p aria-busy="true">Loading…</p></template>
     <template data-component="failure"
       ><p role="alert">
         Request failed: <span data-bind="context.statusCode | fallback:'network'">Status</span>

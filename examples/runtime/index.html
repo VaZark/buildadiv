@@ -33,7 +33,7 @@
             on-no-content="state-empty"
             on-error="state-error"
           ></use-template>
-          <button data-action="loadOrders">Reload</button>
+          <button class="secondary" data-action="loadOrders">Reload</button>
         </article>
         <article class="panel" id="state-empty">
           <h3>No content (204)</h3>
@@ -44,7 +44,7 @@
             on-no-content="state-empty"
             on-error="state-error"
           ></use-template>
-          <button data-action="loadNoOrders">Reload</button>
+          <button class="secondary" data-action="loadNoOrders">Reload</button>
         </article>
         <article class="panel" id="state-error">
           <h3>Error (HTTP 503)</h3>
@@ -55,7 +55,7 @@
             on-no-content="state-empty"
             on-error="state-error"
           ></use-template>
-          <button data-action="loadOutage">Retry</button>
+          <button class="secondary" data-action="loadOutage">Retry</button>
         </article>
         <article class="panel" id="state-timeout">
           <h3>Error (timeout)</h3>
@@ -66,7 +66,7 @@
             on-no-content="state-empty"
             on-error="state-error"
           ></use-template>
-          <button data-action="loadTooSlow">Retry</button>
+          <button class="secondary" data-action="loadTooSlow">Retry</button>
         </article>
       </div>
     </section>
@@ -121,7 +121,7 @@
           <p class="muted">Keeps what it loaded first.</p>
         </article>
       </div>
-      <button data-action="reopenOrders">Reopen all orders</button>
+      <button class="secondary" data-action="reopenOrders">Reopen all orders</button>
     </section>
 
     <section id="pages">
@@ -148,7 +148,7 @@
         stays on screen while more items load.
       </p>
       <use-template subscribe="loadCatalogFeed" on-success="catalog-feed">
-        <p class="muted">Loading the feed…</p>
+        <p class="muted" aria-busy="true">Loading the feed…</p>
       </use-template>
     </section>
 
@@ -163,6 +163,18 @@
         <p slot="body">This paragraph is the page author's markup, placed through a slot.</p>
       </use-template>
       <button id="fill-note">Fill from .data</button>
+    </section>
+
+    <section id="filters">
+      <h2>7 · Filters</h2>
+      <p>
+        A binding is a path plus filters, applied left to right:
+        <code>path | filter | filter:arg</code>. Only <code>fallback</code> is built in; this page
+        registers the provided filters and one of its own with <code>configure({ filters })</code>.
+        Formatting follows <code>&lt;html lang&gt;</code> (here <code>en</code>). The builder runs
+        the same functions for <code>{{ }}</code>, so a pipeline gives the same text at build time.
+      </p>
+      <use-template id="filter-examples" template="filter-table"></use-template>
     </section>
 
     <!-- State templates shared by every region -->
@@ -243,7 +255,7 @@
         Page <span data-bind="context.page">1</span> of <span data-bind="context.pages">1</span>
       </p>
       <button
-        class="previous-page"
+        class="previous-page secondary"
         data-if="context.previousPage"
         data-bind-data-page="context.previousPage"
       >
@@ -269,6 +281,116 @@
         Load more
       </button>
       <p class="muted" data-if-not="context.nextPage">That's everything.</p>
+    </template>
+
+    <!-- Section 7: every filter, its pipeline next to its result -->
+    <template data-component="filter-table">
+      <table class="filters">
+        <thead>
+          <tr>
+            <th>Pipeline</th>
+            <th>Result</th>
+            <th>Note</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>order.total | currency:EUR</code></td>
+            <td class="result" data-bind="order.total | currency:EUR">€0.00</td>
+            <td class="muted">An ISO currency code</td>
+          </tr>
+          <tr>
+            <td><code>order.total | currency</code></td>
+            <td class="result" data-bind="order.total | currency">$0.00</td>
+            <td class="muted">USD by default</td>
+          </tr>
+          <tr>
+            <td><code>stock | number</code></td>
+            <td class="result" data-bind="stock | number">0</td>
+            <td class="muted">Grouping per locale</td>
+          </tr>
+          <tr>
+            <td><code>discount | percent</code></td>
+            <td class="result" data-bind="discount | percent">0%</td>
+            <td class="muted">0.256 → percent</td>
+          </tr>
+          <tr>
+            <td><code>shipped | date</code></td>
+            <td class="result" data-bind="shipped | date">Jan 1, 2025</td>
+            <td class="muted">Medium date by default</td>
+          </tr>
+          <tr>
+            <td><code>shipped | date:long</code></td>
+            <td class="result" data-bind="shipped | date:long">January 1, 2025</td>
+            <td class="muted">Any Intl date style</td>
+          </tr>
+          <tr>
+            <td><code>daysAgo | relativeTime:day</code></td>
+            <td class="result" data-bind="daysAgo | relativeTime:day">today</td>
+            <td class="muted">A signed offset in a unit</td>
+          </tr>
+          <tr>
+            <td><code>minutesLeft | relativeTime:minute</code></td>
+            <td class="result" data-bind="minutesLeft | relativeTime:minute">in 0 minutes</td>
+            <td class="muted">Future offsets too</td>
+          </tr>
+          <tr>
+            <td><code>customer.name | upper</code></td>
+            <td class="result" data-bind="customer.name | upper">CUSTOMER</td>
+            <td class="muted">Locale-aware case</td>
+          </tr>
+          <tr>
+            <td><code>customer.name | lower</code></td>
+            <td class="result" data-bind="customer.name | lower">customer</td>
+            <td class="muted"></td>
+          </tr>
+          <tr>
+            <td><code>review | truncate:24</code></td>
+            <td class="result" data-bind="review | truncate:24">Review text…</td>
+            <td class="muted">Length includes the ellipsis</td>
+          </tr>
+          <tr>
+            <td><code>customer.nickname | fallback:'no nickname'</code></td>
+            <td class="result" data-bind="customer.nickname | fallback:'no nickname'">
+              no nickname
+            </td>
+            <td class="muted">Only for missing values (not 0 or false)</td>
+          </tr>
+          <tr>
+            <td><code>customer.nickname | upper | fallback:'—'</code></td>
+            <td class="result" data-bind="customer.nickname | upper | fallback:'—'">—</td>
+            <td class="muted">Filters pass missing values on, so fallback can come last</td>
+          </tr>
+          <tr>
+            <td><code>customer.name | upper | truncate:8</code></td>
+            <td class="result" data-bind="customer.name | upper | truncate:8">CUSTOM…</td>
+            <td class="muted">Chained left to right</td>
+          </tr>
+          <tr>
+            <td><code>customer.name | initials</code></td>
+            <td class="result" data-bind="customer.name | initials">CN</td>
+            <td class="muted">A project's own filter</td>
+          </tr>
+        </tbody>
+      </table>
+      <h3>Filters in attribute bindings</h3>
+      <p>
+        Filters also work in <code>data-bind-&lt;attribute&gt;</code>, not only in text. The data
+        holds the profile URL as <code data-bind="customer.profile">HTTPS://EXAMPLE.COM/Ada</code>;
+        the link below gets its <code>href</code> from
+        <code>data-bind-href="customer.profile | lower"</code>, and its tooltip (hover it) from
+        <code>data-bind-title="customer.name | upper"</code>.
+      </p>
+      <p>
+        <a
+          class="profile"
+          data-bind-href="customer.profile | lower"
+          data-bind-title="customer.name | upper"
+          data-bind="customer.profile | lower"
+          href="#"
+          >https://example.com/profile</a
+        >
+      </p>
     </template>
 
     <!-- Section 6: bindings plus a slot for page markup -->

@@ -81,7 +81,10 @@ blocks are preserved; the first stage does not bundle assets or provide an edito
 
 ## Tests, examples and tooling
 
-- `tests/unit/shared/`: paths, filter pipelines and filters.
+- `tests/unit/shared/`: paths, the pipeline parser (arguments, order, rejected expressions,
+  registry isolation) and every filter (defaults, locales, missing values, failures).
+- `tests/browser/runtime/filters.spec.ts`: filters in text and attribute bindings, sanitization
+  after filtering, unregistered filters, and identical results in `<use-template>` and `{{ }}`.
 - `tests/unit/builder/`: component folders, CSS scoping, the Vite+ bundler, `buildSite` and the CLI.
 - `tests/unit/runtime/`: contracts, request outcomes, queries, tags, policies,
   formats, persistence and pagination.

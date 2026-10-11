@@ -38,9 +38,63 @@ main {
   border-left: 3px solid #4a8a4a;
   padding: 0.25rem 0.75rem;
 }
+/*
+ * Buttons: one accent colour for primary actions, an outlined variant for
+ * secondary ones (reload, retry, previous, reset) and red for destructive ones.
+ * Margins keep neighbouring buttons apart and off the content above them.
+ */
+:root {
+  --accent: #2f6fb3;
+  --accent-strong: #245889;
+  --accent-soft: #e8f0f9;
+  --danger: #b3261e;
+  --danger-strong: #8c1d17;
+}
 button {
-  padding: 0.4rem 0.7rem;
+  margin: 0.5rem 0.5rem 0 0;
+  padding: 0.45rem 0.9rem;
+  border: 1px solid var(--accent);
+  border-radius: 0.4rem;
+  background: var(--accent);
+  color: #fff;
+  font: inherit;
+  font-size: 0.9rem;
+  line-height: 1.2;
   cursor: pointer;
+}
+button:hover {
+  border-color: var(--accent-strong);
+  background: var(--accent-strong);
+}
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+button.secondary {
+  background: #fff;
+  color: var(--accent);
+}
+button.secondary:hover {
+  background: var(--accent-soft);
+}
+button.danger {
+  border-color: var(--danger);
+  background: var(--danger);
+}
+button.danger:hover {
+  border-color: var(--danger-strong);
+  background: var(--danger-strong);
+}
+/* Buttons inside a line of text or a row stay compact and inline. */
+li button,
+header button {
+  margin: 0 0 0 0.5rem;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.8rem;
 }
 .muted {
   color: #6b7a86;
@@ -59,5 +113,44 @@ button {
     position: static;
     border-left: 0;
     padding-left: 0;
+  }
+}
+
+/*
+ * Gentle motion, in plain CSS: an animation runs when an element is inserted or goes
+ * from display: none to shown. So state templates and new list rows the runtime
+ * inserts, and content data-if reveals, ease in; rows kept across updates don't
+ * replay it. Nothing moves for people who prefer reduced motion.
+ */
+@keyframes enter {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+@keyframes waiting {
+  50% {
+    opacity: 0.45;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  use-template > *,
+  use-template li,
+  [data-if],
+  [data-if-not] {
+    animation: enter 180ms ease-out both;
+  }
+  [aria-busy='true'] {
+    animation:
+      enter 180ms ease-out both,
+      waiting 1.2s ease-in-out 180ms infinite;
+  }
+  button {
+    transition:
+      background-color 150ms ease,
+      transform 100ms ease;
+  }
+  button:active {
+    transform: scale(0.97);
   }
 }
