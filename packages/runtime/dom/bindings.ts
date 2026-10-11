@@ -110,10 +110,6 @@ export class TemplateRenderer {
     public before: ChildNode | null = null,
     public component = template.dataset.component,
   ) {
-    this.template = template;
-    this.parent = parent;
-    this.before = before;
-    this.component = component;
     this.records = new Map<unknown, RenderRecord>();
   }
   /** Remove all owned ranges when the host changes to another state template. */

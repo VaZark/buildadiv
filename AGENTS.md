@@ -59,7 +59,8 @@ Use [CONTRIBUTING.md](CONTRIBUTING.md) for the full coding/review guidelines and
 - Use `unknown` at untrusted boundaries and narrow it; do not use `any` or suppress type checking in library code.
 - Function comments explain why the function exists and its expected behavior, especially ownership, lifecycle and failure rules.
 - Run `npm run check` before handing off; keep unit, compile-time contract and browser validation in their matching test folders.
-- Format maintained sources with `npm run format`; keep generated `dist/` output out of source control.
+- Format maintained sources with `npm run format` (Oxfmt) and keep `npm run lint` (Oxlint) warning-free; keep generated `dist/` output out of source control.
+- Use Vite+ (`vp`) for the development environment; Node.js and npm are pinned in `devEngines`.
 - Generated or hand-written code must stay readable enough to maintain by hand.
 - If a task needs a new convention, propose it in the docs before implementing it.
 - Don't build v1.1 or v2 features (linter, MCP) while v1 is in progress.

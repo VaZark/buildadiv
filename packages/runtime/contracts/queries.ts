@@ -7,7 +7,9 @@ export interface Tag {
   key: string;
 }
 export type Invalidation<Args = unknown> =
-  string | string[] | { tag: string; key?: string; id?: (args: Args) => unknown };
+  | string
+  | string[]
+  | { tag: string; key?: string; id?: (args: Args) => unknown };
 export interface Pagination<Args = unknown, Data = unknown> {
   mode: 'pages' | 'infinite';
   firstPage: Args;

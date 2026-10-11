@@ -8,10 +8,13 @@ or runtime dependency. The editor and remaining build pipeline are still planned
 
 ## Try the examples
 
-Development requires Node.js 22 or newer.
+Development uses [Vite+](https://viteplus.dev) (`vp`) for the environment and
+static checks. `package.json` pins the development Node.js and npm versions in
+`devEngines`, so `vp env` selects them automatically; consumers of the emitted
+runtime still only need Node.js 22 or newer to build.
 
 ```sh
-npm install
+vp install        # or: npm install
 npm run dev
 ```
 
@@ -102,13 +105,15 @@ not yet bundle assets or provide a CLI/editor; see [the builder spec](docs/04-bu
 
 ```sh
 npm run typecheck                # Strict checks of libraries, examples and tests
+npm run lint                     # Oxlint with type-aware rules (fails on warnings)
+npm run format                   # Oxfmt
 npm test                         # Build and run shared/data-layer tests
 npx playwright install chromium  # One-time browser setup
 npm run test:browser              # Compile and exercise vanilla pages in Chromium
 npm run check                    # Both suites, including compilation
 ```
 
-TypeScript and Playwright are development dependencies. Browser tests use actual
+TypeScript, Vite+ (bundling Oxlint and Oxfmt) and Playwright are development dependencies. Browser tests use actual
 compiled modules and a local HTTP server, verifying DOM identity/focus, request
 counts, slots, nested lists, forms, unsafe data, states, persistence, pagination,
 and static component composition. Function comments explain purpose and expected
@@ -122,5 +127,5 @@ tests. Runtime internals use nested `contracts/`, `actions/`, `data/`, `dom/` an
 and expansion. Public import paths stay at the package roots.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for coding guidelines. `npm run check` runs
-one clean build, import-boundary/cycle validation, unit and browser tests, and the
-format check. Individual commands are documented in the code map.
+one clean build, import-boundary/cycle validation, the format and lint checks, and
+unit and browser tests. Individual commands are documented in the code map.

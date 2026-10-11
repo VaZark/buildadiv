@@ -65,7 +65,8 @@ export interface QueryProviderOptions<Args = unknown, Data = unknown>
   method: `${HttpMethod.QUERY}`;
 }
 export type ProviderOptions<Args = unknown, Data = unknown> =
-  GetProviderOptions<Args, Data> | QueryProviderOptions<Args, Data>;
+  | GetProviderOptions<Args, Data>
+  | QueryProviderOptions<Args, Data>;
 
 /** Mutation methods and forbidden query keys make read/write roles disjoint. */
 export interface MutationOptions<Args = unknown, Data = unknown>

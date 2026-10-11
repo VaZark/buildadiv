@@ -134,7 +134,7 @@ export class RenderTemplate extends HTMLElement {
             .filter((item) => item.isIntersecting)
             .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
           if (visible.length)
-            refreshPage(entry, Number((visible[0].target as HTMLElement).dataset.pageIndex));
+            void refreshPage(entry, Number((visible[0].target as HTMLElement).dataset.pageIndex));
         },
         { rootMargin: '100px 0px 0px 0px' },
       );

@@ -61,7 +61,7 @@ function verifyDiscriminator(options: NormalizedActionOptions): void {
     void [absent, read];
   } else if (options.kind === 'mutation') {
     const absent: undefined = options.provides;
-    void absent;
+    void [absent];
   }
 }
 void verifyDiscriminator;

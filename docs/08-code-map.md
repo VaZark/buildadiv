@@ -78,22 +78,27 @@ blocks are preserved; the first stage does not bundle assets or provide an edito
 - `examples/builder/`: static composition source and sandboxed output preview.
 - `scripts/build.ts`: copies HTML/CSS next to compiled modules.
 - `scripts/validate-architecture.ts`: validates the documented import graph.
+- `vite.config.ts`: Oxfmt and Oxlint settings for `vp fmt` / `vp lint`.
 
 Browser cases run with one worker because they share the demo API's mutable state.
 Each runtime case resets that state. This makes request-count assertions deterministic.
 
 ## Commands
 
-| Command                         | Checks / output                                                       |
-| ------------------------------- | --------------------------------------------------------------------- |
-| `npm run typecheck`             | All libraries, examples, fixtures and compile-time contracts          |
-| `npm test`                      | Clean compilation and unit tests                                      |
-| `npm run test:browser`          | Clean compilation and real Chromium integration tests                 |
-| `npm run validate:architecture` | Clean compilation and package/import rules                            |
-| `npm run format:check`          | Consistent formatting without edits                                   |
-| `npm run check`                 | One clean build, architecture checks, both test layers and formatting |
-| `npm run dev`                   | Compile and serve both example websites                               |
+| Command                         | Checks / output                                                         |
+| ------------------------------- | ----------------------------------------------------------------------- |
+| `npm run typecheck`             | All libraries, examples, fixtures and compile-time contracts            |
+| `npm test`                      | Clean compilation and unit tests                                        |
+| `npm run test:browser`          | Clean compilation and real Chromium integration tests                   |
+| `npm run validate:architecture` | Clean compilation and package/import rules                              |
+| `npm run lint`                  | Oxlint with type-aware rules and type checking; warnings fail           |
+| `npm run format`                | Oxfmt rewrite of maintained sources                                     |
+| `npm run format:check`          | Consistent formatting without edits                                     |
+| `npm run check`                 | One clean build, architecture checks, format, lint and both test layers |
+| `npm run dev`                   | Compile and serve both example websites                                 |
 
-Install dependencies with `npm install` and the browser with
+Formatting and lint settings live in `vite.config.ts` and run through Vite+ (`vp fmt`,
+`vp lint`). `vp env` selects the Node.js and npm versions pinned in `devEngines`.
+Install dependencies with `vp install` (or `npm install`) and the browser with
 `npx playwright install chromium`. Builds replace only generated `dist/` output,
 preventing moved or deleted modules from surviving as stale JavaScript.

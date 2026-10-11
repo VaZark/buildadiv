@@ -117,6 +117,15 @@ What was decided, grouped by topic, and what each decision replaced. When a deci
 | Action role contracts use request/query/write interfaces, derived forbidden `never` fields, typed method vocabulary, role-specific return types and a normalized discriminator | Runtime arrays of read/write option names and a method set |
 | Standard methods are typed by role; custom HTTP extension methods use the baseline `action()` | Unrestricted string methods on the mutation convenience helper |
 
+## Development tooling
+
+| Decision | Replaces |
+|---|---|
+| Vite+ (`vite-plus`) is the single development toolchain dependency; `vp fmt` (Oxfmt) formats and `vp lint` (Oxlint) lints, configured in `vite.config.ts` | Prettier with `.prettierrc.json`; no linter |
+| Lint runs type-aware rules plus type checking and fails on warnings. `no-base-to-string` is off because bindings stringify unknown data on purpose | n/a |
+| Builds stay on `tsc` (no `vp build` / `vp pack`), so output remains unbundled native ES modules | n/a |
+| `vp env` manages the development runtime from `devEngines` (Node.js 24, npm 12); `engines.node` stays the consumer-facing range | An unpinned "Node.js 22 or newer" requirement |
+
 ## Semantic source organization
 
 | Decision | Replaces |

@@ -16,7 +16,7 @@ export function scheduleFresh(entry: CacheEntry, refetch: QueryRefresher): void 
   entry.freshTimer = setTimeout(
     () => {
       if (Date.now() < entry.updatedAt + entry.freshFor * 1000) scheduleFresh(entry, refetch);
-      else refetch(entry);
+      else void refetch(entry);
     },
     Math.min(delay, 2147483647),
   );
@@ -34,7 +34,7 @@ export function scheduleUnused(entry: CacheEntry): void {
       entry.unusedTimer.unref?.();
     } else if (cache.get(entry.key) === entry) {
       cache.delete(entry.key);
-      removePersisted(entry);
+      void removePersisted(entry);
     }
   };
   entry.unusedTimer = setTimeout(check, Math.min(Math.max(0, deadline - Date.now()), 2147483647));

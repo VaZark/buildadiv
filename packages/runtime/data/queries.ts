@@ -18,7 +18,8 @@ export function subscribe<Args, Data>(
   clearTimeout(entry.unusedTimer);
   entry.listeners.add(listener);
   if (entry.result) deliver(listener, entry.result, entry);
-  load(entry, args, { initial: true });
+  // Results reach the listener through notify; load never rejects for request failures.
+  void load(entry, args, { initial: true });
   return () => {
     entry.listeners.delete(listener);
     if (!entry.listeners.size) {

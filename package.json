@@ -6,22 +6,35 @@
   "scripts": {
     "build": "npm run clean && tsc && node dist/scripts/build.js",
     "typecheck": "tsc --noEmit",
+    "lint": "vp lint --deny-warnings",
     "test": "npm run build && npm run test:unit",
     "test:browser": "npm run build && playwright test",
-    "check": "npm run build && node dist/scripts/validate-architecture.js && npm run test:unit && playwright test && npm run format:check",
+    "check": "npm run build && node dist/scripts/validate-architecture.js && npm run format:check && npm run lint && npm run test:unit && playwright test",
     "dev": "npm run build && node dist/tests/support/server.js",
     "clean": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\"",
     "test:unit": "node --test --test-isolation=none dist/tests/unit/**/*.test.js",
     "validate:architecture": "npm run build && node dist/scripts/validate-architecture.js",
-    "format": "prettier --write packages tests examples scripts playwright.config.ts tsconfig.json package.json .prettierrc.json CONTRIBUTING.md docs/08-code-map.md README.md AGENTS.md",
-    "format:check": "prettier --check packages tests examples scripts playwright.config.ts tsconfig.json package.json .prettierrc.json CONTRIBUTING.md docs/08-code-map.md README.md AGENTS.md"
+    "format": "vp fmt",
+    "format:check": "vp fmt --check"
   },
   "devDependencies": {
     "@playwright/test": "^1.56.0",
     "@types/node": "^26.6.5",
-    "prettier": "^3.9.10",
     "typescript": "^7.0.2",
-    "typescript-ast": "npm:typescript@^6.0.3"
+    "typescript-ast": "npm:typescript@^6.0.3",
+    "vite-plus": "^1.1.0"
+  },
+  "devEngines": {
+    "packageManager": {
+      "name": "npm",
+      "version": "12.2.0",
+      "onFail": "download"
+    },
+    "runtime": {
+      "name": "node",
+      "version": "24.21.0",
+      "onFail": "download"
+    }
   },
   "engines": {
     "node": ">=22.0.0"

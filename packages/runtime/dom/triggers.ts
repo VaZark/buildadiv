@@ -21,16 +21,18 @@ function delegate(type: string): void {
       if (!fn) throw new Error(`Unknown action: ${element.dataset.action}`);
       if (type === 'submit' || (type === 'click' && element.localName === 'a'))
         event.preventDefault();
+      // Outcomes are published as document events; hand-written actions that
+      // reject surface as unhandled rejections, as any event handler would.
       if (element.localName === 'form')
-        fn(
+        void fn(
           new FormData(
             element as HTMLFormElement,
             (event as SubmitEvent).submitter as HTMLElement | null,
           ),
         );
       // A clicked provider is an explicit refresh (or "load more"), not a cached read.
-      else if (readsQueries(fn.options)) reload(fn as Action);
-      else fn();
+      else if (readsQueries(fn.options)) void reload(fn as Action);
+      else void fn();
     },
     true,
   );

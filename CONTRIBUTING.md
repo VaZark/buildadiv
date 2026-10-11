@@ -58,8 +58,14 @@ implemented; the remaining builder pipeline and editor are planned.
   inputs/results, ownership, preserved state, or relevant failure behavior.
   Explain non-obvious scope, lifecycle and generic-erasure boundaries.
 - Prefer a short useful comment over narrating each implementation statement.
-- Use `npm run format` for the maintained source/docs targets. Formatting uses
-  single quotes and a 100-column print width; formatters remain development tools.
+- Use `npm run format` (Oxfmt through Vite+) for maintained sources. Formatting uses
+  single quotes and a 100-column print width; the spec docs `docs/00`–`07` keep
+  hand-aligned tables and are excluded. Tool settings live in `vite.config.ts`.
+- `npm run lint` runs Oxlint with type-aware rules and type checking and fails on
+  warnings. Fix findings rather than silencing them; a deliberate exception goes in
+  `vite.config.ts` or an `oxlint-disable-next-line` comment with the reason above it.
+- Use `vp env` for the development runtime. `devEngines` in `package.json` pins Node.js
+  and npm; change it with `vp env pin`, not by hand.
 
 ## Validation and review
 
