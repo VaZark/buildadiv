@@ -114,62 +114,83 @@ api/             # providers and mutations
 
 ## Component files
 
-Components live in `components/<name>/<name>.html`, with optional stylesheets and
-behavior modules declared in that file ([01](01-templates.md#component-folder)).
-`buildPage(html, { loadComponent, ...options })` builds a page from them:
+Components live in folders: `components/<name>/<name>.html` with optional
+`<name>.css` and `<name>.js` beside it ([01](01-templates.md#component-folder)).
 
-```js
-import { buildPage, componentFolder } from './builder/index.js';
+### Building a site (Node)
 
-const shop = await buildPage(source, {
-  loadComponent: componentFolder('/components/'),
-  data: { site },
-});
-// shop.html: the page; shop.components: [{ name, styles, scripts }, …]
-const global = siteAssets([shop, about, contact]); // { styles, scripts } for the global build
+```sh
+npm run build                 # also builds the example site below
+node dist/packages/builder/node/cli.js build --config path/to/buildadiv.config.js
 ```
 
-- It loads every component the page mentions (component tags and `<render-template>`
-  references, following the components those files mention), once each, then builds.
-- **Component tags** render at build time; their templates don't ship.
-- **Templates the runtime renders** ship in the page, so the browser doesn't fetch them.
-- **Component CSS and JS are never linked one by one.** The build reports every
-  component the page uses, either way, in `components`, with the stylesheets and
-  behavior modules its file declares, so a component no page uses never ships.
-- **Page bundles.** With `bundle: { bundler, project, page }`, the page's component
-  CSS and JS are unified and minified into one file each, and the page links just
-  those two, at the end of `<head>` after its own styles:
+The config module's default export holds the `buildSite` options; `root` and `outDir`
+resolve against the config file:
 
-  ```js
-  import { viteBundler } from './builder/node/vite.js'; // Node only
+```js
+// buildadiv.config.js
+import { currency, upper } from './shared/filters.js';
 
-  const home = await buildPage(source, {
-    loadComponent: componentFolder('/components/'),
-    bundle: { bundler: viteBundler({ root: 'site' }), project: 'shop', page: 'home' },
-  });
-  // home.html links /assets/shop-home.min.css and /assets/shop-home.min.js
-  // home.bundle: { css: { fileName, code }, js: { fileName, code } } — write them to /assets/
-  ```
+export default {
+  root: '.',              // holds pages/ and components/
+  outDir: '../public',
+  project: 'shop',        // bundle prefix
+  base: '/',              // URL where outDir is served (default '/')
+  assets: 'assets',       // bundle folder inside outDir (default 'assets')
+  data: { site: { title: 'Shop' } },
+  filters: { currency, upper },
+};
+```
 
-  - File names come from the customisable `name({ project, page })` function; the
-    exported default `bundleName` gives `${project}-${page}`. Names must be file-safe
-    (`[\w.-]`). `base` sets the URL path the files are served from (default `/assets/`).
-  - Files are listed in first-use order, styles before scripts, so the cascade follows
-    component use. A page using no component assets gets no bundle and no links.
-  - The bundler is a function `({ name, styles, scripts }) => Promise<{ css?, js? }>`
-    and the build returns the files rather than writing them, so the builder still owns
-    no I/O. `viteBundler({ root })` (Node only) uses Vite+: Rolldown resolves and bundles
-    JS imports, Lightning CSS minifies CSS. It accepts only root-relative URLs inside
-    `root`. CSS scope rewriting is still not done.
-- `siteAssets(pages)` still merges every page's usage into one deduplicated list, for
-  a site-wide bundle instead of per-page ones.
+For every page in `pages/` (subfolders included) the build:
+
+- loads every component the page mentions (component tags and `<render-template>`
+  references, following the components those mention), once each;
+- renders **component tags** into static HTML; their templates don't ship;
+- ships the **templates the runtime renders** in the page, so the browser never fetches them;
+- puts the CSS and JS of every component the page uses, either way, into **one
+  minified stylesheet and one minified script for that page**, and links just those,
+  at the end of `<head>` after the page's own styles. A component no page uses never
+  ships; a page with no component CSS/JS gets no bundle and no links;
+- writes the page to `outDir` at the same relative path, and its bundle files to
+  `outDir/<assets>/`.
+
+**Bundle names** come from the project and page prefixes: `shop-index.min.css`,
+`shop-blog-post.min.js` for `pages/blog/post.html`. The `name({ project, page })`
+option customises them; the exported default `bundleName` gives `${project}-${page}`.
+Names must be file-safe (`[\w.-]`).
+
+**Bundling** uses Vite+ (`viteBundler`): Rolldown bundles each component's JS
+(including modules it imports) and Lightning CSS minifies the CSS. Before that, every
+stylesheet is scoped to its component with the shared `scopeCss`, the same function
+the runtime uses ([01](01-templates.md#css-and-js)). Styles come before scripts, each
+in first-use order, so the cascade follows component use. Only root-relative files
+inside `root` are bundled.
+
+**Parsing** in Node uses jsdom, which follows the browser's HTML parsing rules, so a
+page builds the same in Node as in the browser editor.
+
+### The building blocks
+
+The site build composes browser-compatible functions, which the editor uses too:
+
+- `buildPage(html, { loadComponent, bundle?, parse?, ...options })` builds one page
+  and returns `{ html, components, bundle? }`. `components` lists `{ name, style?,
+  script? }` for each component the page uses.
+- `loadComponent` is a function `(name) => Promise<{ url, html, style?, script? } |
+  undefined>`: `componentFolder(base)` over HTTP (optional files found with `HEAD`
+  requests) or `nodeComponentFolder(root, base)` on disk. Pass a root-relative base so
+  reported URLs are root-relative.
+- `bundle: { bundler, project, page, name?, base? }` makes one bundle per page; the
+  bundler is a function `({ name, components }) => Promise<{ css?, js? }>` and the
+  build returns the files instead of writing them, so the core owns no I/O.
+- `siteComponents(pages)` merges every page's components (each once, first-use order)
+  for one site-wide bundle instead of per-page ones.
+- Node-only pieces live in `packages/builder/node/`: `viteBundler`, `nodeComponentFolder`,
+  `parseHtmlNode` (jsdom), `buildSite` and the CLI.
 - Unknown names (the loader resolves nothing) stay unknown custom elements.
-- `loadComponent` is a function `(name) => Promise<{ url, html } | undefined>`, so
-  the same build works from a server folder, editor buffers or the File System Access
-  API. `componentFolder(base)` is the default; pass a root-relative base so reported
-  asset URLs are root-relative.
-- `buildHtml` accepts the same `{ url, html }` files in `components` when the caller
-  has already loaded them, and stays synchronous.
+- `buildHtml` accepts the same files in `components` when they're already loaded, and
+  stays synchronous.
 
 ## Initial component expansion API
 

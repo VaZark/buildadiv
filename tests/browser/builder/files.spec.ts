@@ -4,13 +4,24 @@ test.beforeEach(async ({ page }) => {
   await page.goto('/tests/support/builder.html');
 });
 
-test('buildPage renders file components and marks their assets for the global build', async ({
+const folder = '/tests/support/components';
+const greetingCard = {
+  name: 'greeting-card',
+  style: `${folder}/greeting-card/greeting-card.css`,
+  script: `${folder}/greeting-card/greeting-card.js`,
+};
+// status-badge has a stylesheet but no behavior module: only existing files are picked up.
+const statusBadge = { name: 'status-badge', style: `${folder}/status-badge/status-badge.css` };
+
+test('buildPage renders folder components and reports the files beside each template', async ({
   page,
 }) => {
   const loaded: string[] = [];
-  page.on('request', (request) => loaded.push(new URL(request.url()).pathname));
+  page.on('request', (request) =>
+    loaded.push(`${request.method()} ${new URL(request.url()).pathname}`),
+  );
   const result = await page.evaluate(async () => {
-    const { buildPage, componentFolder, parseHtml, siteAssets } =
+    const { buildPage, componentFolder, parseHtml, siteComponents } =
       await import('/packages/builder/index.js');
     const loadComponent = componentFolder('/tests/support/components/');
     const shop = await buildPage(
@@ -38,48 +49,39 @@ test('buildPage renders file components and marks their assets for the global bu
         doc.querySelectorAll<HTMLTemplateElement>('template[data-component]'),
         (template) => template.dataset.component,
       ),
-      // The page keeps only its own links; component files are never added to it.
-      styles: Array.from(doc.querySelectorAll('link'), (link) => link.getAttribute('href')),
+      // Without bundling the page keeps only its own links.
+      links: Array.from(doc.querySelectorAll('link'), (link) => link.getAttribute('href')),
       scripts: doc.querySelectorAll('script').length,
       unknown: doc.querySelector('mystery-widget')!.textContent,
       usage: shop.components,
       plain: plain.components,
-      site: siteAssets([shop, about, plain]),
+      site: siteComponents([shop, about, plain]),
     };
   });
-  const folder = '/tests/support/components';
   expect(result).toEqual({
     headings: ['Built', 'Twice'],
     scope: 'greeting-card',
     tags: 0,
     // Rendered at build time, so not shipped; the runtime-rendered badge is shipped.
     shipped: ['status-badge'],
-    styles: ['/site.css'],
+    links: ['/site.css'],
     scripts: 0,
     unknown: 'Keep me',
-    // Both tag and runtime use count; unknown elements are not components.
-    usage: [
-      {
-        name: 'greeting-card',
-        styles: [`${folder}/greeting-card/greeting-card.css`],
-        scripts: [`${folder}/greeting-card/greeting-card.js`],
-      },
-      { name: 'status-badge', styles: [`${folder}/status-badge/status-badge.css`], scripts: [] },
-    ],
+    // Tag and runtime uses both count; unknown elements are not components.
+    usage: [greetingCard, statusBadge],
     plain: [],
-    // Merged across pages, each file once, in first-use order.
-    site: {
-      styles: [
-        `${folder}/greeting-card/greeting-card.css`,
-        `${folder}/status-badge/status-badge.css`,
-      ],
-      scripts: [`${folder}/greeting-card/greeting-card.js`],
-    },
+    // Merged across pages, each component once, in first-use order.
+    site: [greetingCard, statusBadge],
   });
-  expect(loaded.filter((path) => path.endsWith('greeting-card.html'))).toHaveLength(2);
-  // Building only reads component files; it never runs their behavior or the runtime.
-  expect(loaded.some((path) => path.endsWith('.js') && path.includes('/components/'))).toBe(false);
-  expect(loaded.some((path) => path.includes('/runtime/'))).toBe(false);
+  expect(loaded.filter((entry) => entry.endsWith('greeting-card.html'))).toHaveLength(2);
+  // Optional files are only checked for (HEAD); behavior is never fetched or run.
+  expect(loaded).toContain(`HEAD ${folder}/greeting-card/greeting-card.js`);
+  expect(
+    loaded.some(
+      (entry) => entry.startsWith('GET') && entry.endsWith('.js') && entry.includes('/components/'),
+    ),
+  ).toBe(false);
+  expect(loaded.some((entry) => entry.includes('/runtime/'))).toBe(false);
 });
 
 test('buildPage bundles a page under project and page prefixes and links only the bundle', async ({
@@ -87,13 +89,18 @@ test('buildPage bundles a page under project and page prefixes and links only th
 }) => {
   const result = await page.evaluate(async () => {
     const { buildPage, componentFolder, parseHtml } = await import('/packages/builder/index.js');
-    type Request = { name: string; styles: string[]; scripts: string[] };
+    type Request = {
+      name: string;
+      components: { name: string; style?: string; script?: string }[];
+    };
     const requests: Request[] = [];
     const bundler = async (request: Request) => {
       requests.push(request);
       return {
         css: { fileName: `${request.name}.min.css`, code: '.x{}' },
-        ...(request.scripts.length && { js: { fileName: `${request.name}.min.js`, code: 'x()' } }),
+        ...(request.components.some((component) => component.script) && {
+          js: { fileName: `${request.name}.min.js`, code: 'x()' },
+        }),
       };
     };
     const loadComponent = componentFolder('/tests/support/components/');
@@ -140,14 +147,9 @@ test('buildPage bundles a page under project and page prefixes and links only th
       invalid,
     };
   });
-  const folder = '/tests/support/components';
   expect(result.requests[0]).toEqual({
     name: 'shop-home',
-    styles: [
-      `${folder}/greeting-card/greeting-card.css`,
-      `${folder}/status-badge/status-badge.css`,
-    ],
-    scripts: [`${folder}/greeting-card/greeting-card.js`],
+    components: [greetingCard, statusBadge],
   });
   expect(result.home).toEqual({
     // The page's own styles first; then one unified stylesheet and script for the page.

@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { setup } from '../../support/browser.js';
 
-test('render-template loads a component folder once: template, stylesheet and behavior', async ({
+test('render-template loads a component folder once: template, scoped stylesheet and behavior', async ({
   page,
   request,
 }) => {
@@ -18,7 +18,8 @@ test('render-template loads a component folder once: template, stylesheet and be
       'beforeend',
       `<render-template id="first" template="greeting-card"><span slot="title">First</span></render-template>
        <render-template id="second" template="greeting-card"><span slot="title">Second</span></render-template>
-       <render-template id="missing" template="no-such-card"></render-template>`,
+       <render-template id="missing" template="no-such-card"></render-template>
+       <article id="outsider" class="greeting">Same class, not the component</article>`,
     );
   });
   await expect(page.locator('#first h2')).toHaveText('First');
@@ -30,7 +31,11 @@ test('render-template loads a component folder once: template, stylesheet and be
       .locator('#first article')
       .evaluate((article) => getComputedStyle(article).borderTopWidth),
   ).toBe('3px');
-  expect(await page.locator('link[href$="greeting-card.css"]').count()).toBe(1);
+  // Plain `.greeting` CSS is scoped to the component's elements, added once.
+  expect(await page.locator('style[data-component-style="greeting-card"]').count()).toBe(1);
+  expect(
+    await page.locator('#outsider').evaluate((article) => getComputedStyle(article).borderTopWidth),
+  ).toBe('0px');
   expect(await page.evaluate(() => window.greetingBehaviorLoads)).toBe(1);
   await page.locator('#second button').click();
   await expect(page.locator('#second button')).toHaveText('Waved');

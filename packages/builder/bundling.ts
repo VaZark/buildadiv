@@ -1,5 +1,4 @@
 import type { BundleName, BundleOptions, BundleOutput, ComponentUsage } from './contracts.js';
-import { siteAssets } from './usage.js';
 
 /** The default bundle name joins the customisable project and page prefixes. */
 export const bundleName: BundleName = ({ project, page }) => `${project}-${page}`;
@@ -18,11 +17,11 @@ export async function bundlePage(
   components: ComponentUsage[],
   { bundler, project, page, name = bundleName, base = '/assets/' }: BundleOptions,
 ): Promise<BundleOutput> {
-  const { styles, scripts } = siteAssets([{ html: '', components }]);
-  if (!styles.length && !scripts.length) return {};
+  const bundled = components.filter((component) => component.style || component.script);
+  if (!bundled.length) return {};
   const fileBase = name({ project, page });
   if (!safeName.test(fileBase)) throw new Error(`Invalid bundle name: ${fileBase}`);
-  const output = await bundler({ name: fileBase, styles, scripts });
+  const output = await bundler({ name: fileBase, components: bundled });
 
   const head = document.head ?? document.documentElement;
   const prefix = base.endsWith('/') ? base : `${base}/`;

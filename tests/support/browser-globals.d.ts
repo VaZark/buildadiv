@@ -14,5 +14,6 @@ declare global {
     viewportTest: Action<number>;
     invalidateViewport: Action;
     greetingBehaviorLoads?: number;
+    unusedBannerLoaded?: boolean;
   }
 }

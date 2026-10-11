@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>{{ site.title }}</title>
+    <script type="module" src="/examples/site/main.js"></script>
+  </head>
+  <body>
+    <site-layout title="{{ site.title | upper }}">
+      <product-card name="{{ featured.name }}" price="{{ featured.price | currency:EUR }}">
+        <p>Featured this week.</p>
+      </product-card>
+      <ul>
+        <render-template
+          subscribe-to-action="loadProducts"
+          on-success="product-list"
+        ></render-template>
+      </ul>
+    </site-layout>
+  </body>
+</html>

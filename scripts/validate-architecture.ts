@@ -20,7 +20,7 @@ const allowedPackages: Record<string, ReadonlySet<string>> = {
  */
 const nodeFolder = (path: string): boolean => relative(packageRoot, path).split('/')[1] === 'node';
 const nodeImport = (target: string): boolean =>
-  target.startsWith('node:') || target === 'vite-plus';
+  target.startsWith('node:') || target === 'vite-plus' || target === 'jsdom';
 
 /** Traverse only authored TypeScript so generated output cannot hide an invalid dependency. */
 async function sourceFiles(directory: string): Promise<string[]> {

@@ -16,7 +16,7 @@ implemented; the remaining builder pipeline and editor are planned.
 - Keep value imports acyclic. Pass a typed callback where lower-level code must
   invoke a higher-level coordinator. Cross-domain type-only imports are allowed.
 - Package code is browser-compatible. Node-only adapters live in
-  `packages/<package>/node/`; only they may import `node:*` built-ins and `vite-plus`,
+  `packages/<package>/node/`; only they may import `node:*` built-ins, `vite-plus` and `jsdom`,
   and no browser module may import them. Core code receives them as functions
   (for example a `Bundler`), so it stays usable in the editor.
 - Share filters, pipelines, path resolution, slot rules and sanitization rather

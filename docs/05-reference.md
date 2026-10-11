@@ -142,6 +142,7 @@ What a project imports from the runtime package:
 | `runtime/cache.js` | `respectCacheOr`, `defaultItems`, `mergeInfinite`, `mergePages` |
 | `runtime/stores.js` | `localStore`, `sessionStore`, `indexedDbStore` |
 | `runtime/components.js` | `componentFolder` |
+| `lib/buildadiv-runtime.min.js` | Everything above, as one standalone minified file |
 | `runtime/filters.js` | `currency`, `number`, `percent`, `date`, `relativeTime`, `upper`, `lower`, `truncate` (re-exported from `shared`) |
 
 ## Packages

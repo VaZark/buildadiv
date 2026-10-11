@@ -1,6 +1,8 @@
 import { resolve, sep } from 'node:path';
 import { build } from 'vite-plus';
 import type { Bundler, BundleOutput } from '../contracts.js';
+import { scopeCss } from '../../shared/css.js';
+import { isComponentName } from '../../shared/components.js';
 
 export interface ViteBundlerOptions {
   /** The site directory that root-relative component URLs (`/components/…`) resolve against. */
@@ -11,13 +13,17 @@ export interface ViteBundlerOptions {
 
 const entryName = 'buildadiv-page-bundle';
 const entryId = `\0${entryName}`;
+// Stylesheets are imported with their component in the query so one transform can scope them.
+const scopeQuery = /\.css\?scope=([a-z0-9-]+)$/;
 
 /**
  * Node-only bundler built on Vite+ (Rolldown for JavaScript, Lightning CSS for
- * stylesheets). A virtual entry imports the page's component files in first-use
- * order, styles before behavior, so the CSS cascade matches component use. The
- * build stays in memory; callers write the returned files. Only root-relative
- * URLs inside `root` are bundled, so a component cannot pull in arbitrary files.
+ * stylesheets). A virtual entry imports the components' files in first-use order,
+ * styles before behavior, so the CSS cascade matches component use. Each
+ * stylesheet is scoped to its component with the shared `scopeCss` before Vite
+ * processes it, exactly as the runtime scopes styles it loads. The build stays in
+ * memory; callers write the returned files. Only root-relative URLs inside `root`
+ * are bundled, so a component cannot pull in arbitrary files.
  */
 export function viteBundler({ root, minify = true }: ViteBundlerOptions): Bundler {
   const siteRoot = resolve(root);
@@ -30,8 +36,15 @@ export function viteBundler({ root, minify = true }: ViteBundlerOptions): Bundle
     return path;
   };
 
-  return async ({ name, styles, scripts }) => {
-    const imports = [...styles, ...scripts].map((url) => `import ${JSON.stringify(fileFor(url))};`);
+  return async ({ name, components }) => {
+    for (const component of components)
+      if (!isComponentName(component.name))
+        throw new Error(`Invalid component name: ${component.name}`);
+    const styles = components.flatMap(({ name: component, style }) =>
+      style ? [`${fileFor(style)}?scope=${component}`] : [],
+    );
+    const scripts = components.flatMap(({ script }) => (script ? [fileFor(script)] : []));
+    const imports = [...styles, ...scripts].map((path) => `import ${JSON.stringify(path)};`);
     const suffix = minify ? '.min' : '';
     const result = await build({
       root: siteRoot,
@@ -43,6 +56,14 @@ export function viteBundler({ root, minify = true }: ViteBundlerOptions): Bundle
           name: entryName,
           resolveId: (id) => (id === entryName ? entryId : undefined),
           load: (id) => (id === entryId ? imports.join('\n') : undefined),
+        },
+        {
+          name: `${entryName}-scope`,
+          enforce: 'pre',
+          transform: (code, id) => {
+            const component = scopeQuery.exec(id)?.[1];
+            return component ? scopeCss(code, component) : undefined;
+          },
         },
       ],
       build: {

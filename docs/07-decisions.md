@@ -94,15 +94,18 @@ What was decided, grouped by topic, and what each decision replaced. When a deci
 |---|---|
 | Native browser ES modules; `configure({ actions })` explicitly registers imported functions under unique HTML/event names | Unspecified discovery of module-local action exports |
 | Helper actions return `{ response, context }` in every state; direct components accept `.data`, retaining previews until data is supplied | Unspecified JavaScript rendering/call interface |
-| Runtime adds `data-c`; component CSS uses explicit scoped selectors and is never rewritten | Unspecified CSS rewriting |
-| Component files declare their optional stylesheet and behavior module with `<link rel="stylesheet">` / `<script type="module" src>` next to the template | Probing for `<name>.css` / `<name>.js` by file name |
-| A `<render-template>` naming a template not in the page loads its component file through `configure({ components })`, links its CSS and imports its JS once, before the first render | Pages linking every component's CSS and JS by hand |
-| `buildPage` loads component files for tags and runtime references, renders tags and ships only runtime templates. It never links component CSS/JS into the page: it reports per-page usage, and `siteAssets` merges it into the inputs of one global CSS/JS build | Components only as inline templates; per-page `<link>`/`<script>` tags for each component |
+| Component CSS is written plainly and scoped automatically on each selector's last compound (`.card` → `.card[data-c="x"]`) by one shared `scopeCss`, used by the bundler and the runtime; explicit `[data-c` selectors are left as written | Hand-written `[data-c]` selectors; CSS Modules class renaming |
+| Folder convention: `<name>.css` / `<name>.js` beside `<name>.html` are picked up when the component is used; the HTML holds only the template. Node checks the disk; the HTTP loader uses `HEAD` requests | `<link>` / `<script>` declarations inside the component file |
+| A `<render-template>` naming a template not in the page loads its component folder through `configure({ components })`: the template, a scoped `<style>` and the imported behavior, once, before the first render | Pages linking every component's CSS and JS by hand |
+| `buildPage` loads component folders for tags and runtime references, renders tags, ships only runtime templates and reports the components each page uses; component files are never linked one by one | Components only as inline templates; per-component `<link>`/`<script>` tags |
 | Component loading is a function (`componentFolder(base)` is the default) shared by runtime and builder; the builder still owns no I/O itself | String folder settings |
 | Component JS is an ordinary module imported once per page; its rules are unchanged (no data fetching) | n/a |
 | `buildPage` can unify and minify a page's component CSS/JS into one file each, named by a customisable `name({ project, page })` (default `${project}-${page}`), linked once from the page and returned for the caller to write | Per-component links; a single unnamed global bundle |
 | Bundling is a `Bundler` function; the default implementation uses Vite+ (Rolldown, Lightning CSS) and is Node-only | esbuild-wasm; a built-in concatenating bundler |
-| Node-only adapters live in `packages/<package>/node/`, may import `node:*` and `vite-plus`, and are never imported by browser modules (enforced by the architecture check) | All package code restricted to relative imports |
+| Node-only adapters live in `packages/<package>/node/`, may import `node:*`, `vite-plus` and `jsdom`, and are never imported by browser modules (enforced by the architecture check) | All package code restricted to relative imports |
+| Site builds run in Node with the DOM-based builder and jsdom (browser HTML parsing rules); `buildSite` and a `buildadiv build --config` CLI write pages and per-page bundles | A text-only builder; builds only inside a browser |
+| `buildSite` separates `base` (URL where the output is served) from `assets` (bundle folder in the output) | One asset path used as both URL and output folder |
+| The runtime also ships as one standalone minified ES module, `dist/lib/buildadiv-runtime.min.js` (packed by `vp pack`), with bundled typings | Copying `dist/packages/runtime` and `dist/packages/shared` together |
 | Browser tests serve on port 4174 (`TEST_PORT`), separate from `npm run dev` on 4173 (`PORT`) | Both fixed to 4173 |
 | Infinite providers share a sequence; explicit arguments select pages; exported `mergeInfinite` / `mergePages` defaults and `items` enable envelope responses | Unspecified pagination call / viewport integration |
 

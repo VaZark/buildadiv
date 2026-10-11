@@ -5,7 +5,6 @@ export type {
   PageOptions,
   PageBuild,
   ComponentUsage,
-  SiteAssets,
   Bundler,
   BundleRequest,
   BundleOutput,
@@ -16,7 +15,7 @@ export type {
 } from './contracts.js';
 export type { ComponentFile, ComponentLoader } from '../shared/components.js';
 export { buildHtml, buildPage } from './build.js';
-export { siteAssets } from './usage.js';
+export { siteComponents } from './usage.js';
 export { bundleName } from './bundling.js';
 export { componentFolder } from '../shared/components.js';
 export { expandComponents } from './expansion.js';

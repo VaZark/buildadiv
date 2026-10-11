@@ -1,6 +1,6 @@
 import type { ComponentFile } from '../shared/components.js';
 import type { DomRoot } from '../shared/types.js';
-import { readComponentFile } from '../shared/components.js';
+import { componentTemplates } from '../shared/components.js';
 import { parseHtml } from './html.js';
 
 /** Only hyphenated names are static component tags; single-word names stay runtime declarations. */
@@ -8,10 +8,10 @@ export function isStaticComponentName(name: string | null): name is string {
   return Boolean(name?.includes('-'));
 }
 
-/** Stylesheet and behavior-module URLs a component file declares, for the global build. */
+/** The stylesheet and behavior module found beside a component's template file. */
 export interface ComponentAssets {
-  styles: string[];
-  scripts: string[];
+  style?: string;
+  script?: string;
 }
 export interface Definitions {
   templates: Map<string, HTMLTemplateElement>;
@@ -25,7 +25,7 @@ const isComponentFile = (source: unknown): source is ComponentFile =>
  * Reuse inline and external template declarations without consuming them: the
  * runtime still needs its declarations. Static names require a hyphen, and
  * ambiguous duplicate definitions fail before any component tags are replaced.
- * Component files also contribute the stylesheets and behavior modules they declare.
+ * Component files also contribute the stylesheet and behavior module beside them.
  * Strings and files are parsed with `parse`, the same DOM adapter as the page.
  */
 export function collectDefinitions(
@@ -61,11 +61,14 @@ export function collectDefinitions(
   for (const source of sources) {
     if (typeof source === 'string') scan(parse(source));
     else if (isComponentFile(source)) {
-      const { templates, styles, scripts } = readComponentFile(parse(source.html), source.url);
-      for (const template of templates) {
+      for (const template of componentTemplates(parse(source.html))) {
         add(template);
         const name = template.getAttribute('data-component');
-        if (isStaticComponentName(name)) assets.set(name, { styles, scripts });
+        if (isStaticComponentName(name))
+          assets.set(name, {
+            ...(source.style && { style: source.style }),
+            ...(source.script && { script: source.script }),
+          });
       }
     } else if (source) scan(source);
     else throw new TypeError('Components must be template elements, HTML strings or files');

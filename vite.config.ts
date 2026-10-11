@@ -3,6 +3,17 @@ import { defineConfig } from 'vite-plus';
 // Vite+ supplies the static checks (Oxfmt, Oxlint, type-aware linting) and the
 // development environment. Builds stay on `tsc` so output remains plain ES modules.
 export default defineConfig({
+  // `vp pack`: the runtime as one standalone, minified ES module with bundled typings.
+  pack: {
+    entry: { 'buildadiv-runtime.min': 'packages/runtime/standalone.ts' },
+    outDir: 'dist/lib',
+    format: 'esm',
+    platform: 'browser',
+    target: 'es2022',
+    minify: true,
+    dts: true,
+    sourcemap: true,
+  },
   fmt: {
     singleQuote: true,
     printWidth: 100,

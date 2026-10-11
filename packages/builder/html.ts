@@ -9,10 +9,12 @@ export function parseHtml(html: string): Document {
 /**
  * Produce HTML output after DOM expansion, preserving document-level comments
  * and the doctype. HTML serialization keeps native void elements and escaping.
+ * Only node properties are used, so any DOM implementation (browser or jsdom) works;
+ * doctypes serialize as `<!DOCTYPE name>`, as the HTML serialization algorithm does.
  */
 export function serializeHtml(document: Document): string {
   return Array.from(document.childNodes, (node) => {
-    if (node.nodeType === 10) return new XMLSerializer().serializeToString(node);
+    if (node.nodeType === 10) return `<!DOCTYPE ${(node as DocumentType).name}>`;
     if (node.nodeType === 8) return `<!--${(node as Comment).data}-->`;
     return (node as Element).outerHTML ?? node.textContent ?? '';
   }).join('\n');

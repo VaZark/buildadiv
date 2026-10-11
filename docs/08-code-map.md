@@ -6,12 +6,12 @@ tests. Generated `dist/` files are build output; review the TypeScript source.
 
 ## Package boundaries
 
-| Package   | Responsibility                                                                          | Allowed package dependencies   |
-| --------- | --------------------------------------------------------------------------------------- | ------------------------------ |
-| `shared`  | Paths, pipelines, filters, slots, sanitization, template references and component files | None                           |
-| `runtime` | Client-side rendering and HTTP data lifecycle                                           | `shared`                       |
-| `builder` | Static HTML parsing and component expansion                                             | `shared`                       |
-| `editor`  | Planned browser editor                                                                  | `shared`, `runtime`, `builder` |
+| Package   | Responsibility                                                                                       | Allowed package dependencies   |
+| --------- | ---------------------------------------------------------------------------------------------------- | ------------------------------ |
+| `shared`  | Paths, pipelines, filters, slots, sanitization, template references, component files and CSS scoping | None                           |
+| `runtime` | Client-side rendering and HTTP data lifecycle                                                        | `shared`                       |
+| `builder` | Static HTML parsing, component expansion, page bundles and the Node site build                       | `shared`                       |
+| `editor`  | Planned browser editor                                                                               | `shared`, `runtime`, `builder` |
 
 `npm run validate:architecture` checks these boundaries, native relative `.js`
 specifiers, and acyclic value imports. Type-only references may cross domains.
@@ -39,7 +39,8 @@ use the emitted `.js` paths. Internal modules import domain contracts directly.
 | `data/tags.ts`, `keys.ts`                                | Invalidation, reconciliation and id matching              | Runtime unit `tags.test.ts`; browser action/rendering tests             |
 | `dom/bindings.ts`, `element.ts`                          | Keyed nodes, bindings, slots and state templates          | Browser `runtime/rendering.spec.ts`                                     |
 | `dom/triggers.ts`, `configuration/settings.ts`           | Declarative triggers and named module registration        | Browser `runtime/actions.spec.ts`                                       |
-| `dom/components.ts`, root `components.ts`                | Loading component files, their CSS and behavior modules   | Browser `runtime/components.spec.ts`; unit `shared/components.test.ts`  |
+| `dom/components.ts`, root `components.ts`                | Loading component folders: template, scoped CSS, behavior | Browser `runtime/components.spec.ts`; unit `shared/components.test.ts`  |
+| `standalone.ts`                                          | Single-file distribution entry (`vp pack`)                | Browser `builder/site.spec.ts` (the page loads only the packed file)    |
 
 Read the data path in this order:
 
@@ -55,19 +56,22 @@ stays acyclic even though requests can cause mounted queries to refetch.
 
 ## Builder
 
-| Module                 | Responsibility                                          | Validation                      |
-| ---------------------- | ------------------------------------------------------- | ------------------------------- |
-| `contracts.ts`         | Expansion and parse/serialize adapters                  | Type check                      |
-| `html.ts`              | Native document parsing/serialization                   | Builder browser tests           |
-| `definitions.ts`       | Template lookup, names and duplicate detection          | `builder/components.spec.ts`    |
-| `interpolation.ts`     | Shared pipeline evaluation into plain strings           | `builder/interpolation.spec.ts` |
-| `expansion.ts`         | In-place replacement, scope ownership, slots and cycles | `builder/components.spec.ts`    |
-| `pruning.ts`           | Dropping definitions the runtime no longer renders      | `builder/components.spec.ts`    |
-| `loading.ts`           | Finding and loading the component files a page uses     | `builder/files.spec.ts`         |
-| `usage.ts`             | Merging page component usage for the global build       | `builder/files.spec.ts`         |
-| `bundling.ts`          | Page bundle names, bundler call and bundle links        | `builder/files.spec.ts`         |
-| `node/vite.ts`         | Node-only Vite+ bundler (Rolldown, Lightning CSS)       | Unit `builder/vite.test.ts`     |
-| `build.ts`, `index.ts` | String compilation and the public facade                | `builder/example.spec.ts`       |
+| Module                        | Responsibility                                          | Validation                                                  |
+| ----------------------------- | ------------------------------------------------------- | ----------------------------------------------------------- |
+| `contracts.ts`                | Expansion and parse/serialize adapters                  | Type check                                                  |
+| `html.ts`                     | Native document parsing/serialization                   | Builder browser tests                                       |
+| `definitions.ts`              | Template lookup, names and duplicate detection          | `builder/components.spec.ts`                                |
+| `interpolation.ts`            | Shared pipeline evaluation into plain strings           | `builder/interpolation.spec.ts`                             |
+| `expansion.ts`                | In-place replacement, scope ownership, slots and cycles | `builder/components.spec.ts`                                |
+| `pruning.ts`                  | Dropping definitions the runtime no longer renders      | `builder/components.spec.ts`                                |
+| `loading.ts`                  | Finding and loading the component files a page uses     | `builder/files.spec.ts`                                     |
+| `usage.ts`                    | Merging page component usage for the global build       | `builder/files.spec.ts`                                     |
+| `bundling.ts`                 | Page bundle names, bundler call and bundle links        | `builder/files.spec.ts`                                     |
+| `node/vite.ts`                | Node-only Vite+ bundler: scopes, bundles, minifies      | Unit `builder/vite.test.ts`                                 |
+| `node/folder.ts`              | Component folders on disk                               | Unit `builder/site.test.ts`                                 |
+| `node/dom.ts`                 | jsdom parsing for Node builds                           | Unit `builder/site.test.ts`                                 |
+| `node/site.ts`, `node/cli.ts` | Whole-site build and the `buildadiv build` CLI          | Unit `builder/site.test.ts`; browser `builder/site.spec.ts` |
+| `build.ts`, `index.ts`        | String compilation and the public facade                | `builder/example.spec.ts`                                   |
 
 The builder composes these stages and imports only shared utilities. Runtime
 blocks are preserved; the first stage does not bundle assets or provide an editor.
@@ -81,6 +85,8 @@ blocks are preserved; the first stage does not bundle assets or provide an edito
 - `tests/browser/runtime/` and `tests/browser/builder/`: emitted modules on vanilla pages.
 - `tests/support/`: shared fixture helpers, browser globals and the demonstration HTTP server.
   `tests/support/components/` is a fixture component folder used by runtime and builder tests.
+- `examples/site/`: a site built by the CLI (`npm run build:site`) into `dist/examples/site-output/`;
+  its pages load only the standalone runtime file.
 - `examples/vanilla/`: live runtime shop; all HTTP actions stay in `api/`.
 - `examples/builder/`: static composition source and sandboxed output preview.
 - `examples/playground/`: manual scenarios for runtime behaviors; `tests/browser/runtime/playground.spec.ts`

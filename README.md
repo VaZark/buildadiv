@@ -31,9 +31,11 @@ The server prints its URLs on start:
 
 ## Use the runtime on a vanilla page
 
-Run `npm run build`, then copy `dist/packages/runtime/` and
-`dist/packages/shared/` together to your static assets, preserving their relative
-paths. Serve JavaScript with the correct MIME type. Consumers need no build step.
+Run `npm run build`, then copy the single file `dist/lib/buildadiv-runtime.min.js`
+(about 10 kB gzipped; typings in `buildadiv-runtime.min.d.ts`) to your static assets
+and import everything from it. Serve JavaScript with the correct MIME type. Consumers
+need no build step. The per-module files in `dist/packages/runtime/` and
+`dist/packages/shared/` also work when copied together.
 
 ```html
 <template data-component="greeting">
@@ -41,8 +43,7 @@ paths. Serve JavaScript with the correct MIME type. Consumers need no build step
 </template>
 <render-template subscribe-to-action="loadProfile" on-success="greeting"></render-template>
 <script type="module">
-  import { configure } from './runtime/index.js';
-  import { provider } from './runtime/action.js';
+  import { configure, provider } from './buildadiv-runtime.min.js';
   const loadProfile = provider({ url: '/api/profile' });
   configure({ actions: { loadProfile } });
 </script>
@@ -112,14 +113,20 @@ Supports nested definitions, multiple roots, attribute props, caller-scoped slot
 shared filter pipelines, sanitization, and cycle/duplicate diagnostics. Runtime
 `<template>` and `<render-template>` blocks pass through; definitions used only by
 component tags are rendered at build time and left out of the output.
-`buildPage(html, { loadComponent: componentFolder('/components/') })` loads component
-folders for the tags and runtime references a page uses and returns `{ html, components }`.
-Pages never link component CSS or JS; `siteAssets(pages)` merges every page's usage
-into the inputs of the site's global CSS/JS build, so only used components are
-included. With `bundle: { bundler, project, page }`, each page gets one unified,
-minified stylesheet and script (`shop-home.min.css` / `.js` by default; the name is a
-customisable function) built by the Node-only `viteBundler` (Vite+: Rolldown and
-Lightning CSS). This stage does not yet provide a CLI/editor; see [the builder spec](docs/04-builder-and-editor.md#component-files).
+Components live in folders (`components/<name>/<name>.html`, plus optional `.css` and
+`.js` that are picked up automatically; CSS is written plainly and scoped for you).
+Build a whole site in Node:
+
+```sh
+node dist/packages/builder/node/cli.js build --config buildadiv.config.js
+```
+
+Each page in `pages/` gets its component tags rendered and one minified stylesheet and
+script holding only the components it uses, named from the project and page prefixes
+(`shop-index.min.css`; the name is customisable). Bundling uses Vite+ (Rolldown,
+Lightning CSS); parsing in Node uses jsdom. `examples/site/` is a complete example,
+built by `npm run build` into `dist/examples/site-output/`. The editor is not built
+yet; see [the builder spec](docs/04-builder-and-editor.md#component-files).
 
 ## Verification
 

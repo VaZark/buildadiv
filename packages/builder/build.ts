@@ -44,8 +44,7 @@ function compilePage(
   const usage: ComponentUsage[] = [];
   for (const name of new Set([...used, ...runtime])) {
     if (!definitions.templates.has(name)) continue;
-    const assets = definitions.assets.get(name);
-    usage.push({ name, styles: assets?.styles ?? [], scripts: assets?.scripts ?? [] });
+    usage.push({ name, ...definitions.assets.get(name) });
   }
   return { document, components: usage };
 }

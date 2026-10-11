@@ -1,4 +1,4 @@
-import { buildPage, componentFolder, siteAssets } from '../../packages/builder/index.js';
+import { buildPage, componentFolder, siteComponents } from '../../packages/builder/index.js';
 import { upper, currency } from '../../packages/shared/filters.js';
 
 // Keep source loading separate from expansion so the same builder can work with
@@ -16,4 +16,4 @@ const page = await buildPage(source, {
 document.querySelector('iframe')!.srcdoc = page.html;
 document.querySelector('#output')!.textContent = page.html;
 // A site build merges every page's usage; here the site has a single page.
-document.querySelector('#assets')!.textContent = JSON.stringify(siteAssets([page]), null, 2);
+document.querySelector('#assets')!.textContent = JSON.stringify(siteComponents([page]), null, 2);

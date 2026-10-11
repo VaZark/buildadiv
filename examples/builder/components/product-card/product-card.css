@@ -1,4 +1,4 @@
-.card[data-c='product-card'] {
+.card {
   border: 1px solid #ccd;
   border-radius: 0.5rem;
   padding: 1rem;

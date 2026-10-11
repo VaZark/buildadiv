@@ -15,7 +15,8 @@
     "skipLibCheck": true,
     "paths": {
       "/packages/*": ["./packages/*"],
-      "/examples/*": ["./examples/*"]
+      "/examples/*": ["./examples/*"],
+      "/lib/buildadiv-runtime.min.js": ["./packages/runtime/standalone.ts"]
     }
   },
   "include": [

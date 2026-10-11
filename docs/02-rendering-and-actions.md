@@ -296,18 +296,40 @@ configure({ components: componentFolder('/components/') });
 ```
 
 - When a `<render-template>` names a template the page doesn't declare, the runtime
-  loads `components/<name>/<name>.html`, links the stylesheets and imports the
-  behavior modules it declares ([01](01-templates.md#component-folder)), then renders.
-  The template is added to the page, so every later use renders immediately.
-- Each component loads once, however many elements use it. Stylesheets finish
-  loading and behavior modules finish importing before the first render.
-- A template already in the page (inline, or shipped by the build) is used as is; the
-  build declares that component's assets itself.
-- `components` is a function `(name) => Promise<{ url, html } | undefined>`;
-  `componentFolder(base)` is the default implementation. Without it, only templates
-  declared in the page render, and an unknown name is reported as an error.
-- A missing file (404) is an unknown template. A failing stylesheet or behavior module
-  is reported, and the component still renders.
+  loads `components/<name>/<name>.html` and, when they exist beside it, `<name>.css`
+  (added as a `<style>`, scoped with the same rules the build uses) and `<name>.js`
+  (imported) ([01](01-templates.md#component-folder)), then renders. The template is
+  added to the page, so every later use renders immediately.
+- Each component loads once, however many elements use it. Its style is in place and
+  its behavior imported before the first render.
+- A template already in the page (inline, or shipped by the build) is used as is; in a
+  built site that component's CSS and JS are already in the page bundle.
+- `components` is a function `(name) => Promise<{ url, html, style?, script? } | undefined>`;
+  `componentFolder(base)` is the default implementation. It finds the optional files
+  with `HEAD` requests, so a component without them costs a 404 each; built sites
+  avoid that entirely. Without `components`, only templates declared in the page
+  render, and an unknown name is reported as an error.
+- A missing template file (404) is an unknown template. A failing stylesheet or
+  behavior module is reported, and the component still renders.
+
+## Standalone runtime file
+
+`npm run build` also packs the whole public runtime (every export of `index`, `action`,
+`cache`, `formats`, `stores`, `filters` and `components`, with the shared code they use)
+into one minified ES module, `dist/lib/buildadiv-runtime.min.js`, with typings in
+`buildadiv-runtime.min.d.ts`. Copy that one file to any site:
+
+```html
+<script type="module">
+  import { configure, provider, currency } from '/lib/buildadiv-runtime.min.js';
+  const loadProducts = provider({ url: '/api/products' });
+  configure({ actions: { loadProducts }, filters: { currency } });
+</script>
+```
+
+It needs nothing else from this repository. Importing it registers `<render-template>`.
+The per-module files under `dist/packages/runtime/` remain for projects that want only
+some modules.
 
 ## TypeScript action roles
 

@@ -13,11 +13,11 @@ export interface BuildOptions extends ExpansionOptions {
   parse?: (html: string) => Document;
   serialize?: (document: Document) => string;
 }
-/** One component a built page uses, with the files the global CSS/JS build must include. */
+/** One component a built page uses, with the folder files its CSS/JS bundle must include. */
 export interface ComponentUsage {
   name: string;
-  styles: string[];
-  scripts: string[];
+  style?: string;
+  script?: string;
 }
 /**
  * A built page and the components it uses, whether rendered from tags at build
@@ -31,11 +31,13 @@ export interface PageBuild {
   bundle?: BundleOutput;
 }
 
-/** The component files one page bundle must unify, in first-use order. */
+/**
+ * The components one bundle unifies, in first-use order. Each stylesheet is
+ * scoped to its component (`.card` → `.card[data-c="name"]`) while bundling.
+ */
 export interface BundleRequest {
   name: string;
-  styles: string[];
-  scripts: string[];
+  components: ComponentUsage[];
 }
 export interface BundleFile {
   fileName: string;
@@ -46,7 +48,7 @@ export interface BundleOutput {
   css?: BundleFile;
   js?: BundleFile;
 }
-/** Unify and minify one page's component files; owns no page HTML. */
+/** Unify, scope and minify one bundle's component files; owns no page HTML. */
 export type Bundler = (request: BundleRequest) => Promise<BundleOutput>;
 export interface BundleNameParts {
   project: string;
@@ -62,11 +64,6 @@ export interface BundleOptions {
   name?: BundleName;
   /** URL path the bundle files are served from; defaults to `/assets/`. */
   base?: string;
-}
-/** The deduplicated inputs of the site's global stylesheet and script builds. */
-export interface SiteAssets {
-  styles: string[];
-  scripts: string[];
 }
 export interface PageOptions extends BuildOptions {
   /** Finds component files for tags and runtime references the page does not define. */

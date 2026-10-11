@@ -1,0 +1,8 @@
+.card {
+  border: 1px solid #ccd5dd;
+  border-radius: 0.5rem;
+  padding: 1rem;
+}
+.card.selected {
+  border-color: #2f7a46;
+}

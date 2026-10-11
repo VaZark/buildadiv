@@ -1,32 +1,24 @@
 import type { DomRoot } from './types.js';
 
-/** A component's HTML file and the URL it came from (absolute or root-relative). */
+/**
+ * A component's template file and its optional stylesheet and behavior module.
+ * By convention they sit together in `components/<name>/` as `<name>.html`,
+ * `<name>.css` and `<name>.js`; whichever exists is picked up when the component
+ * is used. URLs are absolute or root-relative.
+ */
 export interface ComponentFile {
   url: string;
   html: string;
+  style?: string;
+  script?: string;
 }
-/** Find one component's file by name; resolve undefined when it does not exist. */
+/** Find one component's files by name; resolve undefined when it does not exist. */
 export type ComponentLoader = (name: string) => Promise<ComponentFile | undefined>;
-/** What a component file declares: its templates and its optional stylesheet/behavior URLs. */
-export interface ComponentParts {
-  templates: HTMLTemplateElement[];
-  styles: string[];
-  scripts: string[];
-}
 
 const componentName = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/;
 const placeholderOrigin = 'https://component.invalid';
-
-/**
- * Resolve a URL written inside a component file against that file's URL. Root-relative
- * file URLs stay root-relative, so built pages do not embed the builder's origin.
- */
-function resolveAgainst(href: string, fileUrl: string): string {
-  const resolved = new URL(href, new URL(fileUrl, placeholderOrigin));
-  return resolved.origin === placeholderOrigin
-    ? resolved.pathname + resolved.search + resolved.hash
-    : resolved.href;
-}
+/** Validated so a template name can never escape the components folder. */
+export const isComponentName = (name: string): boolean => componentName.test(name);
 
 /** Absolute and root-relative bases are kept; a relative base resolves against the page. */
 function folderRoot(base: string | URL): string {
@@ -40,36 +32,37 @@ function folderRoot(base: string | URL): string {
 }
 
 /**
- * The default loader for the `components/<name>/<name>.html` folder convention.
- * A missing file resolves undefined (an unknown component); other HTTP failures
- * reject. Names are validated so a template name can never escape the folder.
- * Pass a root-relative base (`/components/`) so built pages link root-relative assets.
+ * The default loader for the component folder convention, over HTTP. A missing
+ * template file (404) resolves undefined, an unknown component; other HTTP
+ * failures reject. The optional stylesheet and behavior module are detected with
+ * `HEAD` requests, so a component without them costs one quiet 404 each.
+ * Pass a root-relative base (`/components/`) so built pages use root-relative URLs.
  */
 export function componentFolder(base: string | URL): ComponentLoader {
   const root = folderRoot(base);
+  const request = (url: string, method: 'GET' | 'HEAD') =>
+    fetch(new URL(url, globalThis.location?.href ?? placeholderOrigin), { method });
   return async (name) => {
-    if (!componentName.test(name)) throw new Error(`Invalid component name: ${name}`);
-    const url = `${root}${name}/${name}.html`;
-    const response = await fetch(new URL(url, globalThis.location?.href ?? placeholderOrigin));
+    if (!isComponentName(name)) throw new Error(`Invalid component name: ${name}`);
+    const folder = `${root}${name}/${name}`;
+    const response = await request(`${folder}.html`, 'GET');
     if (response.status === 404) return undefined;
     if (!response.ok) throw new Error(`Loading component ${name} failed: HTTP ${response.status}`);
-    return { url, html: await response.text() };
+    const [style, script] = await Promise.all(
+      ['css', 'js'].map(async (extension) =>
+        (await request(`${folder}.${extension}`, 'HEAD')).ok ? `${folder}.${extension}` : undefined,
+      ),
+    );
+    return {
+      url: `${folder}.html`,
+      html: await response.text(),
+      ...(style && { style }),
+      ...(script && { script }),
+    };
   };
 }
 
-/**
- * Read a parsed component file. Stylesheets and module scripts are optional and
- * declared with ordinary `<link rel="stylesheet">` and `<script type="module" src>`
- * tags; their URLs resolve against the file. Nothing is executed here.
- */
-export function readComponentFile(root: DomRoot, url: string): ComponentParts {
-  return {
-    templates: Array.from(root.querySelectorAll<HTMLTemplateElement>('template[data-component]')),
-    styles: Array.from(root.querySelectorAll('link[rel~="stylesheet"][href]'), (link) =>
-      resolveAgainst(link.getAttribute('href')!, url),
-    ),
-    scripts: Array.from(root.querySelectorAll('script[type="module"][src]'), (script) =>
-      resolveAgainst(script.getAttribute('src')!, url),
-    ),
-  };
+/** The component templates a parsed component file declares. */
+export function componentTemplates(root: DomRoot): HTMLTemplateElement[] {
+  return Array.from(root.querySelectorAll<HTMLTemplateElement>('template[data-component]'));
 }
