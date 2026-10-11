@@ -96,7 +96,10 @@ test('the runtime gallery demonstrates every state and pattern it describes', as
   await expect(note).toContainText('By You');
 
   // 7 · Filters: every pipeline's result, formatted for <html lang="en">.
-  const results = await page.locator('#filters td.result').allTextContents();
+  // Intl output may contain no-break spaces and, for Swiss grouping, either apostrophe.
+  const results = (await page.locator('#filters td.result').allTextContents()).map((text) =>
+    text.replace(/[\u00a0\u202f]/g, ' ').replace('’', "'"),
+  );
   expect(results).toEqual([
     '€1,234.50',
     '$1,234.50',
@@ -112,6 +115,12 @@ test('the runtime gallery demonstrates every state and pattern it describes', as
     'no nickname',
     '—',
     'ADA LOV…',
+    '1.234,50 €',
+    "9'876'543",
+    '9.876.543',
+    '15 janvier 2025',
+    '2025/01/15',
+    'İSTANBUL',
     'AL',
   ]);
   const profile = page.locator('#filters a.profile');

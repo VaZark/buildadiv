@@ -1,4 +1,4 @@
-import type { FilterArgument, FilterRegistry } from './types.js';
+import type { FilterArgument, FilterContext, FilterRegistry } from './types.js';
 import { resolvePath } from './path.js';
 
 /** Split only unquoted separators so literal URLs and punctuation stay intact. */
@@ -63,14 +63,23 @@ export function parsePipeline(source: string): {
   };
 }
 
-/** Apply explicitly registered transforms in order; unknown filters are errors. */
-export function evaluate(source: string, data: unknown, registry: FilterRegistry): unknown {
+/**
+ * Apply explicitly registered transforms in order; unknown filters are errors.
+ * `context` carries the caller's formatting defaults (locale, currency) to each
+ * filter as `this`, so the runtime and the builder format the same way.
+ */
+export function evaluate(
+  source: string,
+  data: unknown,
+  registry: FilterRegistry,
+  context: FilterContext = {},
+): unknown {
   const { path, filters } = parsePipeline(source);
   let value = resolvePath(data, path);
   for (const { name, args } of filters) {
     if (!Object.hasOwn(registry, name) || typeof registry[name] !== 'function')
       throw new Error(`Unregistered filter: ${name}`);
-    value = registry[name](value, ...args);
+    value = registry[name].call(context, value, ...args);
   }
   return value;
 }

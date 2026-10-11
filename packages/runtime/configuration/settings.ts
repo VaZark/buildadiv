@@ -9,6 +9,8 @@ export const settings: {
   persist: Store | false;
   maxAge: number;
   buster: string;
+  locale?: string;
+  currency?: string;
 } = {
   filters: { fallback },
   actions: new Map(),

@@ -12,25 +12,19 @@ import {
   upper,
 } from '../../../packages/shared/filters.js';
 import { evaluate } from '../../../packages/shared/pipeline.js';
+import type { FilterContext } from '../../../packages/shared/types.js';
 
 /**
- * Filters read their locale from `<html lang>`. Give them one synchronously and
- * restore it before returning, so no other test can observe the stub.
+ * Filters take their formatting defaults as `this`: the runtime and the builder
+ * pass the configured locale or the element's language. Tests pass it directly.
  */
-function inLanguage<Result>(lang: string, run: () => Result): Result {
-  const scope = globalThis as { document?: unknown };
-  const previous = scope.document;
-  scope.document = { documentElement: { lang } };
-  try {
-    return run();
-  } finally {
-    if (previous === undefined) delete scope.document;
-    else scope.document = previous;
-  }
-}
-const english = <Result>(run: () => Result): Result => inLanguage('en-US', run);
+const inLanguage = (locale: string, currency?: string): FilterContext => ({
+  locale,
+  ...(currency && { currency }),
+});
+const english = inLanguage('en-US');
 // Intl may use narrow no-break spaces; compare with ordinary spaces.
-const spaces = (value: unknown) => String(value).replace(/[  ]/g, ' ');
+const spaces = (value: unknown) => String(value).replace(/[\u00a0\u202f]/g, ' ');
 
 test('fallback replaces only missing values and is the one filter always available', () => {
   assert.equal(fallback(null, '—'), '—');
@@ -44,69 +38,78 @@ test('fallback replaces only missing values and is the one filter always availab
   assert.equal(evaluate("missing | fallback:'none'", {}, { fallback }), 'none');
 });
 
-test('currency formats with the page locale and an ISO code (USD by default)', () => {
-  english(() => {
-    assert.equal(currency(1234.5, 'EUR'), '€1,234.50');
-    assert.equal(currency(5), '$5.00');
-    assert.equal(currency('19.9', 'GBP'), '£19.90');
-  });
+test('currency formats a named or configured currency for the locale; Intl validates it', () => {
+  const format = (locale: string, ...args: (string | number)[]) =>
+    spaces(currency.call(inLanguage(locale), 1234.5, ...args));
+  assert.equal(format('en-US', 'EUR'), '€1,234.50');
+  assert.equal(format('de-DE', 'EUR'), '1.234,50 €');
+  assert.equal(format('de-DE', 'USD'), '1.234,50 $');
+  assert.equal(format('ja-JP', 'JPY'), '￥1,235');
+  // A configured currency applies when the pipeline names none; a named code still wins.
+  assert.equal(spaces(currency.call(inLanguage('en-US', 'EUR'), 5)), '€5.00');
+  assert.equal(spaces(currency.call(inLanguage('en-US', 'EUR'), 5, 'GBP')), '£5.00');
+  // A trailing argument overrides the locale for this one use; an empty code keeps the default.
+  assert.equal(spaces(currency.call(english, 1234.5, 'EUR', 'fr-FR')), '1 234,50 €');
   assert.equal(
-    inLanguage('de-DE', () => spaces(currency(1234.5, 'EUR'))),
+    spaces(currency.call(inLanguage('en-US', 'EUR'), 1234.5, '', 'de-DE')),
     '1.234,50 €',
   );
-  assert.throws(() => english(() => currency(1, 'NOT-A-CODE')), RangeError);
+  // Intl cannot choose a currency for a locale, so a missing one says how to supply it.
+  assert.throws(() => currency.call(english, 1), /currency needs a code/);
+  // Invalid codes and locales are Intl's own errors.
+  assert.throws(() => currency.call(english, 1, 'NOT-A-CODE'), RangeError);
+  assert.throws(() => currency.call(english, 1, 'EUR', 'not a locale!'), RangeError);
 });
 
-test('number and percent format with the page locale', () => {
-  english(() => {
-    assert.equal(number(1234.5), '1,234.5');
-    assert.equal(number('42'), '42');
-    assert.equal(percent(0.256), '26%');
-    assert.equal(percent(1), '100%');
-  });
-  assert.equal(
-    inLanguage('de-DE', () => number(1234.5)),
-    '1.234,5',
-  );
+test('number and percent group and punctuate per locale, overridable per use', () => {
+  assert.equal(number.call(english, 1234.5), '1,234.5');
+  assert.equal(number.call(english, '42'), '42');
+  assert.equal(number.call(inLanguage('de-DE'), 1234.5), '1.234,5');
+  assert.equal(spaces(number.call(inLanguage('fr-FR'), 1234.5)), '1 234,5');
+  assert.equal(number.call(english, 1234.5, 'de-DE'), '1.234,5');
+  assert.equal(percent.call(english, 0.256), '26%');
+  assert.equal(spaces(percent.call(inLanguage('fr-FR'), 0.256)), '26 %');
+  assert.equal(spaces(percent.call(english, 1, 'de-DE')), '100 %');
 });
 
-test('date takes an Intl date style (medium by default); invalid input fails visibly', () => {
+test('date takes a style (medium by default) and a locale; invalid input fails visibly', () => {
   const noon = '2025-01-15T12:00:00';
-  english(() => {
-    assert.equal(date(noon), 'Jan 15, 2025');
-    assert.equal(date(noon, 'long'), 'January 15, 2025');
-    assert.equal(date(noon, 'short'), '1/15/25');
-    assert.equal(date(new Date(2025, 0, 15).getTime(), 'long'), 'January 15, 2025');
-  });
-  assert.equal(
-    inLanguage('fr-FR', () => date(noon, 'long')),
-    '15 janvier 2025',
-  );
-  assert.throws(() => english(() => date('not a date')), RangeError);
-  assert.throws(() => english(() => date(noon, 'gigantic')), RangeError);
+  assert.equal(date.call(english, noon), 'Jan 15, 2025');
+  assert.equal(date.call(english, noon, 'long'), 'January 15, 2025');
+  assert.equal(date.call(english, noon, 'short'), '1/15/25');
+  assert.equal(date.call(english, new Date(2025, 0, 15).getTime(), 'long'), 'January 15, 2025');
+  assert.equal(date.call(inLanguage('fr-FR'), noon, 'long'), '15 janvier 2025');
+  // Per use: `date:long:ja-JP`, or `date::fr-FR` to keep the default style.
+  assert.equal(date.call(english, noon, 'long', 'ja-JP'), '2025年1月15日');
+  assert.equal(date.call(english, noon, '', 'fr-FR'), '15 janv. 2025');
+  assert.throws(() => date.call(english, 'not a date'), RangeError);
+  assert.throws(() => date.call(english, noon, 'gigantic'), RangeError);
 });
 
-test('relativeTime formats a signed offset in the given unit (seconds by default)', () => {
-  english(() => {
-    assert.equal(relativeTime(-1, 'day'), 'yesterday');
-    assert.equal(relativeTime(1, 'day'), 'tomorrow');
-    assert.equal(relativeTime(3, 'hour'), 'in 3 hours');
-    assert.equal(relativeTime(-30), '30 seconds ago');
-  });
-  assert.throws(() => english(() => relativeTime(1, 'fortnight')), RangeError);
+test('relativeTime formats a signed offset in a unit (seconds by default) per locale', () => {
+  assert.equal(relativeTime.call(english, -1, 'day'), 'yesterday');
+  assert.equal(relativeTime.call(english, 1, 'day'), 'tomorrow');
+  assert.equal(relativeTime.call(english, 3, 'hour'), 'in 3 hours');
+  assert.equal(relativeTime.call(english, -30), '30 seconds ago');
+  assert.equal(relativeTime.call(inLanguage('de-DE'), -1, 'day'), 'gestern');
+  assert.equal(relativeTime.call(english, -1, 'day', 'es'), 'ayer');
+  assert.throws(() => relativeTime.call(english, 1, 'fortnight'), RangeError);
 });
 
-test('upper and lower use the page locale for case rules', () => {
-  english(() => {
-    assert.equal(upper('café'), 'CAFÉ');
-    assert.equal(lower('ADA'), 'ada');
-    assert.equal(upper(42), '42');
-  });
+test("upper and lower use the locale's case rules, overridable per use", () => {
+  assert.equal(upper.call(english, 'café'), 'CAFÉ');
+  assert.equal(lower.call(english, 'ADA'), 'ada');
+  assert.equal(upper.call(english, 42), '42');
   // Turkish has a dotted capital I: locale-aware casing matters.
-  assert.equal(
-    inLanguage('tr', () => upper('istanbul')),
-    'İSTANBUL',
-  );
+  assert.equal(upper.call(inLanguage('tr'), 'istanbul'), 'İSTANBUL');
+  assert.equal(upper.call(english, 'istanbul', 'tr'), 'İSTANBUL');
+  assert.equal(lower.call(inLanguage('tr'), 'I'), 'ı');
+});
+
+test('without any locale, filters use the environment default', () => {
+  const environment = new Intl.NumberFormat().resolvedOptions().locale;
+  assert.equal(number(1234.5), new Intl.NumberFormat(environment).format(1234.5));
+  assert.equal(number.call({}, 1234.5), new Intl.NumberFormat(environment).format(1234.5));
 });
 
 test('truncate limits length including the ellipsis (40 by default)', () => {

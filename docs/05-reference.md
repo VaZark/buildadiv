@@ -83,7 +83,7 @@ From [02 · Rendering and actions](02-rendering-and-actions.md#use-template).
 | `invalidates` | mutation | none; `'Tag'`, `['A', 'B']`, `{ tag, key }`, `{ tag, id }` | [03](03-data-layer.md#invalidation) |
 | `reconciles` | mutation | none; `{ tag, key }` | [03](03-data-layer.md#reconciliation) |
 
-Global options via `configure({ … })`: `actions` (explicit name → function registration), `filters`, `persist`, persistence `maxAge` (default 24 h), and `buster`.
+Global options via `configure({ … })`: `actions` (explicit name → function registration), `filters`, `persist`, persistence `maxAge` (default 24 h), `buster`, and the formatting defaults `locale` (else each element's nearest `lang`) and `currency` (the default for `currency` filters that name no code).
 
 ## Behavior functions
 

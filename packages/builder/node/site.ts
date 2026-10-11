@@ -30,6 +30,10 @@ export interface SiteOptions {
   filters?: FilterRegistry;
   /** Minify bundles; on by default. */
   minify?: boolean;
+  /** Override each page's own `<html lang>` (and nested `lang`) for formatting. */
+  locale?: string;
+  /** The currency for `currency` filters that name no code (Intl can't infer one). */
+  currency?: string;
 }
 export interface SiteResult {
   pages: string[];
@@ -66,6 +70,8 @@ export async function buildSite({
   data,
   filters,
   minify,
+  locale,
+  currency,
 }: SiteOptions): Promise<SiteResult> {
   const pageRoot = join(root, pages);
   const loadComponent = nodeComponentFolder(root, components);
@@ -83,6 +89,8 @@ export async function buildSite({
       loadComponent,
       ...(data && { data }),
       ...(filters && { filters }),
+      ...(locale && { locale }),
+      ...(currency && { currency }),
       bundle: { bundler, project, page, name, base: assetUrl },
     });
     const output = join(outDir, file);

@@ -171,8 +171,11 @@
         A binding is a path plus filters, applied left to right:
         <code>path | filter | filter:arg</code>. Only <code>fallback</code> is built in; this page
         registers the provided filters and one of its own with <code>configure({ filters })</code>.
-        Formatting follows <code>&lt;html lang&gt;</code> (here <code>en</code>). The builder runs
-        the same functions for <code>{{ }}</code>, so a pipeline gives the same text at build time.
+        Formatting is always locale-aware. The locale is the filter's own last argument
+        (<code>number:de-DE</code>), else <code>configure({ locale })</code>, else the element's
+        nearest <code>lang</code> (this page: <code>en</code>), else the browser's default. A
+        currency is named (<code>currency:EUR</code>) or configured. The builder runs the same
+        functions for <code>{{ }}</code>, using the language of the page it builds.
       </p>
       <use-template id="filter-examples" template="filter-table"></use-template>
     </section>
@@ -302,7 +305,9 @@
           <tr>
             <td><code>order.total | currency</code></td>
             <td class="result" data-bind="order.total | currency">$0.00</td>
-            <td class="muted">USD by default</td>
+            <td class="muted">
+              The configured currency: <code>configure({ currency: 'USD' })</code>
+            </td>
           </tr>
           <tr>
             <td><code>stock | number</code></td>
@@ -365,6 +370,36 @@
             <td><code>customer.name | upper | truncate:8</code></td>
             <td class="result" data-bind="customer.name | upper | truncate:8">CUSTOM…</td>
             <td class="muted">Chained left to right</td>
+          </tr>
+          <tr>
+            <td><code>order.total | currency:EUR:de-DE</code></td>
+            <td class="result" data-bind="order.total | currency:EUR:de-DE">0,00 €</td>
+            <td class="muted">Named currency, per-use locale</td>
+          </tr>
+          <tr>
+            <td><code>stock | number</code></td>
+            <td class="result" lang="de-CH" data-bind="stock | number">0</td>
+            <td class="muted">This cell has lang=&quot;de-CH&quot;</td>
+          </tr>
+          <tr>
+            <td><code>stock | number:de-DE</code></td>
+            <td class="result" data-bind="stock | number:de-DE">0</td>
+            <td class="muted">Per-use locale</td>
+          </tr>
+          <tr>
+            <td><code>shipped | date:long:fr-FR</code></td>
+            <td class="result" data-bind="shipped | date:long:fr-FR">1 janvier 2025</td>
+            <td class="muted">Per-use locale</td>
+          </tr>
+          <tr>
+            <td><code>shipped | date::ja-JP</code></td>
+            <td class="result" data-bind="shipped | date::ja-JP">2025/01/01</td>
+            <td class="muted">Empty argument keeps the default style</td>
+          </tr>
+          <tr>
+            <td><code>customer.city | upper:tr</code></td>
+            <td class="result" data-bind="customer.city | upper:tr">CITY</td>
+            <td class="muted">Turkish case rules</td>
           </tr>
           <tr>
             <td><code>customer.name | initials</code></td>

@@ -154,19 +154,27 @@ import { slugify } from './my-filters.js';   // a project's own filter is just a
 configure({ filters: { currency, number, upper, slugify } });
 ```
 
-| Filter | Arguments (default) | Example → result (`<html lang="en">`) | Notes |
+| Filter | Arguments (default) | Example → result | Notes |
 |---|---|---|---|
 | `fallback` | text (`''`) | `nickname \| fallback:'none'` → `none` | Always available. Replaces only `null`, `undefined` and `''`; keeps `0` and `false` |
-| `currency` | ISO code (`USD`) | `1234.5 \| currency:EUR` → `€1,234.50` | An unknown code throws |
-| `number` | none | `9876543 \| number` → `9,876,543` | |
-| `percent` | none | `0.256 \| percent` → `26%` | The value is a fraction |
-| `date` | `full`, `long`, `medium`, `short` (`medium`) | `'2025-01-15T12:00' \| date:long` → `January 15, 2025` | Invalid dates or styles throw |
-| `relativeTime` | unit (`second`) | `-1 \| relativeTime:day` → `yesterday` | The value is a signed offset in that unit |
-| `upper`, `lower` | none | `'Ada' \| upper` → `ADA` | Locale-aware (`tr`: `i` → `İ`) |
+| `currency` | code (the configured one), locale | `1234.5 \| currency:EUR` → `€1,234.50` in `en`, `1.234,50 €` in `de-DE` | Without a code, `configure({ currency })` / the `currency` build option; with neither it throws, since `Intl` can't pick a currency for a locale. Invalid codes are `Intl` errors |
+| `number` | locale | `9876543 \| number` → `9,876,543` / `9.876.543` (`de-DE`) | |
+| `percent` | locale | `0.256 \| percent` → `26%` | The value is a fraction |
+| `date` | style: `full`, `long`, `medium`, `short` (`medium`); locale | `'2025-01-15T12:00' \| date:long` → `January 15, 2025` | Invalid dates or styles throw |
+| `relativeTime` | unit (`second`), locale | `-1 \| relativeTime:day` → `yesterday` | The value is a signed offset in that unit |
+| `upper`, `lower` | locale | `'istanbul' \| upper:tr` → `İSTANBUL` | Locale-aware case rules |
 | `truncate` | length (`40`) | `'abcdef' \| truncate:4` → `abc…` | Length includes the `…`; never parses markup |
 | your own | anything | `name \| initials` → `AL` | Any `(value, ...args) => value` function |
 
-- Formatting filters use `Intl` with the locale from `<html lang>`, so a page's language changes its numbers and dates without configuration.
+**Every formatting filter is locale-aware**, with optional overrides. The locale is, in order:
+
+1. the filter's own last argument: `number:de-DE`, `currency:EUR:fr-FR`, `date:long:ja-JP`. Leave an earlier argument empty to keep its default: `date::fr-FR`;
+2. a configured locale: `configure({ locale })` at runtime, the `locale` option when building;
+3. the **nearest `lang`** of the element: `<html lang>`, or a section's own `lang`, so one page can mix languages. The builder uses the page it builds, so pages in different languages build correctly in the same run;
+4. the environment's default (the browser's, or the build machine's).
+
+The filters only resolve these strings and hand them to `Intl`, which does all locale work and validation; invalid locales, codes or styles surface as `Intl`'s own errors. A currency is a named code (`currency:EUR`) or the configured one (`configure({ currency })` / the `currency` build option).
+
 - **Missing values pass through** every provided filter unchanged, so `fallback` can come last: `nickname | upper | fallback:'—'`.
 - **Arguments** are literals: numbers (`truncate:4`), bare words (`currency:EUR`) or quoted strings, which may contain `|` and `:` (`fallback:'a|b'`; `\'` escapes a quote).
 - **Your own filters** should do the same: one value in, one value out, and return `null` / `undefined` unchanged. Register them under the name used in HTML (`{ initials }`, or `{ 'relative-time': relativeTime }` to rename one). Lookups use only the registered keys, so names like `toString` never reach built-in methods.

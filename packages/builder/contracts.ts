@@ -8,6 +8,14 @@ export interface ExpansionOptions {
   filters?: FilterRegistry;
   /** Called with each component name as its tag is expanded. */
   onExpand?: (name: string) => void;
+  /**
+   * Overrides the language `{{ }}` filters format for. Otherwise each value uses the
+   * built page's language where it appears (its nearest `lang`), then the
+   * environment's default, so pages in different languages build correctly.
+   */
+  locale?: string;
+  /** The currency for `currency` filters that name no code (Intl can't infer one). */
+  currency?: string;
 }
 export interface BuildOptions extends ExpansionOptions {
   parse?: (html: string) => Document;

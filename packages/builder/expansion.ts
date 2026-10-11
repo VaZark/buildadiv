@@ -1,4 +1,4 @@
-import type { DomRoot } from '@buildadiv/shared/types.js';
+import type { DomRoot, FilterContext } from '@buildadiv/shared/types.js';
 import type { ExpansionOptions } from './contracts.js';
 import { fallback } from '@buildadiv/shared/filters.js';
 import { fillSlots, cloneSlotContent } from '@buildadiv/shared/slots.js';
@@ -10,6 +10,7 @@ interface AssignedScope {
   scope: Record<string, unknown>;
   stack: string[];
   component: string | undefined;
+  lang: string | undefined;
 }
 
 /**
@@ -20,13 +21,18 @@ interface AssignedScope {
  */
 export function expandComponents<Root extends DomRoot>(
   root: Root,
-  { components = [], data = {}, filters = {}, onExpand }: ExpansionOptions = {},
+  { components = [], data = {}, filters = {}, onExpand, locale, currency }: ExpansionOptions = {},
 ): Root {
   if (!root?.querySelectorAll)
     throw new TypeError('Expansion requires a DOM document, fragment, or element');
   const definitions = collectDefinitions(root, components).templates;
   const registry = { fallback, ...filters };
   const assignedScopes = new WeakMap<Node, AssignedScope>();
+  /** Configured values win; otherwise the language of where the value sits in the page. */
+  const formatting = (lang: string | undefined): FilterContext => ({
+    locale: locale ?? lang,
+    ...(currency && { currency }),
+  });
 
   /**
    * Forwarded slots may be cloned through several component definitions. Carry
@@ -49,26 +55,31 @@ export function expandComponents<Root extends DomRoot>(
    * Walk real nodes once, taking a snapshot before replacements. Scope overrides
    * on slot clones prevent a callee's props from leaking into caller-written
    * markup; the definition stack detects composition cycles without rejecting
-   * finite nesting authored through slots.
+   * finite nesting authored through slots. `lang` is the language in effect where
+   * the node sits: component markup is walked before it is inserted, so the page's
+   * language travels down the walk instead of being looked up through ancestors.
    */
   function visit(
     node: Node,
     scope: Record<string, unknown>,
     stack: string[],
     component: string | undefined,
+    lang: string | undefined,
   ): void {
     const assigned = assignedScopes.get(node);
-    if (assigned) ({ scope, stack, component } = assigned);
+    if (assigned) ({ scope, stack, component, lang } = assigned);
     if (node.nodeType === 3) {
-      (node as Text).data = interpolate((node as Text).data, scope, registry);
+      (node as Text).data = interpolate((node as Text).data, scope, registry, formatting(lang));
       return;
     }
     if (node.nodeType !== 1) {
-      for (const child of Array.from(node.childNodes)) visit(child, scope, stack, component);
+      for (const child of Array.from(node.childNodes)) visit(child, scope, stack, component, lang);
       return;
     }
     const element = node as Element;
     const name = element.localName;
+    const ownLang = element.getAttribute('lang');
+    if (ownLang !== null) lang = ownLang || undefined;
     if (name === 'template' || name === 'use-template') return;
     const definition = definitions.get(name);
     if (definition) {
@@ -77,16 +88,17 @@ export function expandComponents<Root extends DomRoot>(
       const props = Object.fromEntries(
         Array.from(element.attributes, (attribute) => [
           attribute.name,
-          interpolate(attribute.value, scope, registry),
+          interpolate(attribute.value, scope, registry, formatting(lang)),
         ]),
       );
       const fragment = definition.content.cloneNode(true) as DocumentFragment;
       const assignedNodes = fillSlots(fragment, Array.from(node.childNodes), cloneWithScopes);
       for (const child of assignedNodes) {
-        if (!assignedScopes.has(child)) assignedScopes.set(child, { scope, stack, component });
+        if (!assignedScopes.has(child))
+          assignedScopes.set(child, { scope, stack, component, lang });
       }
       for (const child of Array.from(fragment.childNodes)) {
-        visit(child, { ...scope, props }, [...stack, name], name);
+        visit(child, { ...scope, props }, [...stack, name], name, lang);
       }
       element.replaceWith(fragment);
       return;
@@ -94,14 +106,19 @@ export function expandComponents<Root extends DomRoot>(
     if (component) element.setAttribute('data-c', component);
     for (const attribute of Array.from(element.attributes)) {
       if (!attribute.value.includes('{{')) continue;
-      const value = safeAttribute(attribute.name, interpolate(attribute.value, scope, registry));
+      const value = safeAttribute(
+        attribute.name,
+        interpolate(attribute.value, scope, registry, formatting(lang)),
+      );
       if (value == null) element.removeAttribute(attribute.name);
       else element.setAttribute(attribute.name, value);
     }
     if (name === 'script' || name === 'style') return;
-    for (const child of Array.from(node.childNodes)) visit(child, scope, stack, component);
+    for (const child of Array.from(node.childNodes)) visit(child, scope, stack, component, lang);
   }
 
-  visit(root, data, [], undefined);
+  // An element or fragment root inherits the language of where it already sits.
+  const parent = root.nodeType === 1 ? (root as Element).parentElement : null;
+  visit(root, data, [], undefined, parent?.closest('[lang]')?.getAttribute('lang') || undefined);
   return root;
 }

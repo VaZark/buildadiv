@@ -8,4 +8,8 @@ export interface Configuration {
   persist?: Store | false;
   maxAge?: number;
   buster?: string;
+  /** Overrides the language filters format for; otherwise each element's nearest `lang`. */
+  locale?: string;
+  /** The currency for `currency` filters that name no code (Intl can't infer one). */
+  currency?: string;
 }

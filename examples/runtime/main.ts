@@ -25,6 +25,8 @@ const initials = (value: unknown): unknown =>
 configure({
   actions: { ...actions },
   filters: { currency, number, percent, date, relativeTime, upper, lower, truncate, initials },
+  // The currency for `currency` when a pipeline names none; Intl can't infer one from a locale.
+  currency: 'USD',
 });
 
 /**
@@ -57,6 +59,11 @@ document.querySelector<UseTemplate>('#filter-examples')!.data = {
   shipped: '2025-01-15T12:00:00',
   daysAgo: -1,
   minutesLeft: 5,
-  customer: { name: 'Ada Lovelace', nickname: null, profile: 'HTTPS://EXAMPLE.COM/Ada' },
+  customer: {
+    name: 'Ada Lovelace',
+    nickname: null,
+    profile: 'HTTPS://EXAMPLE.COM/Ada',
+    city: 'istanbul',
+  },
   review: 'Lovely scarf, arrived quickly and well packed.',
 };

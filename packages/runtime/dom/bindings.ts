@@ -11,6 +11,7 @@ interface RenderRecord {
 
 import { resolvePath, truthy } from '@buildadiv/shared/path.js';
 import { evaluate } from '@buildadiv/shared/pipeline.js';
+import type { FilterContext } from '@buildadiv/shared/types.js';
 import { fillSlots } from '@buildadiv/shared/slots.js';
 import { settings } from '../configuration/settings.js';
 import { sameKey } from '../data/keys.js';
@@ -27,8 +28,21 @@ function setAttribute(element: Element, name: string, value: string | null): voi
     if (element.hasAttribute(name)) element.removeAttribute(name);
   } else if (element.getAttribute(name) !== value) element.setAttribute(name, value);
 }
+/**
+ * Formatting context for one element: a configured locale wins; otherwise the
+ * element's own language, i.e. its nearest `lang` attribute, so a page can mix
+ * languages. Without either, filters use the browser's default.
+ */
+function formatting(element: Element): FilterContext {
+  return {
+    locale: settings.locale ?? (element.closest('[lang]')?.getAttribute('lang') || undefined),
+    ...(settings.currency && { currency: settings.currency }),
+  };
+}
 /** Apply text, sanitized attributes and truthiness without replacing the whole element. */
 function bindElement(element: HTMLElement, data: unknown): void {
+  let resolved: FilterContext | undefined;
+  const context = () => (resolved ??= formatting(element));
   if (!initialDisplay.has(element)) initialDisplay.set(element, element.style.display);
   const passes = (attribute: string, invert: boolean): boolean =>
     !element.hasAttribute(attribute) ||
@@ -44,7 +58,7 @@ function bindElement(element: HTMLElement, data: unknown): void {
     passes('data-if', false) && passes('data-if-not', true) ? initialDisplay.get(element)! : 'none';
   if (element.style.display !== display) element.style.display = display;
   if (element.hasAttribute('data-bind')) {
-    const value = evaluate(element.getAttribute('data-bind')!, data, settings.filters);
+    const value = evaluate(element.getAttribute('data-bind')!, data, settings.filters, context());
     const text = value == null ? '' : String(value);
     if (element.textContent !== text) element.textContent = text;
   }
@@ -54,7 +68,7 @@ function bindElement(element: HTMLElement, data: unknown): void {
     setAttribute(
       element,
       name,
-      safeAttribute(name, evaluate(attribute.value, data, settings.filters)),
+      safeAttribute(name, evaluate(attribute.value, data, settings.filters, context())),
     );
   }
 }

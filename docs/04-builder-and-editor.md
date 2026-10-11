@@ -164,6 +164,8 @@ export default {
   assets: 'assets',       // bundle folder inside outDir (default 'assets')
   data: { site: { title: 'Shop' } },
   filters: { currency, upper },
+  // locale: 'en-GB',     // optional: otherwise each page's own lang (nested lang too)
+  // currency: 'EUR',     // default for `currency` without a code
 };
 ```
 

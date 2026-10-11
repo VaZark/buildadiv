@@ -123,3 +123,81 @@ test('an unregistered filter is an error, not a silent no-op', async ({ page, re
   });
   await expect(assign).rejects.toThrow('Unregistered filter: sparkle');
 });
+
+// Intl may use narrow no-break spaces; compare with ordinary spaces.
+const spaces = (text: string | null) => (text ?? '').replace(/[\u00a0\u202f]/g, ' ');
+const normalized = (values: Record<string, string | null>) =>
+  Object.fromEntries(Object.entries(values).map(([key, text]) => [key, spaces(text)]));
+
+test('formatting follows the nearest lang, at runtime and in the page being built', async ({
+  page,
+  request,
+}) => {
+  await setup(page, request);
+  const result = await page.evaluate(async () => {
+    const { configure } = await import('/packages/runtime/index.js');
+    const { currency, date } = await import('/packages/runtime/filters.js');
+    const { buildHtml, parseHtml } = await import('/packages/builder/index.js');
+    configure({ filters: { currency, date }, currency: 'EUR' });
+    const data = { price: 1234.5, when: '2025-01-15T12:00:00' };
+
+    // Runtime: one template, rendered in an English page and inside a German section.
+    document.body.insertAdjacentHTML(
+      'beforeend',
+      `<template data-component="money"><p data-bind="price | currency">€0</p></template>
+       <use-template id="money-en" template="money"></use-template>
+       <section lang="de-DE"><use-template id="money-de" template="money"></use-template></section>`,
+    );
+    const render = (id: string) => {
+      const host = document.querySelector<HTMLElement & { data: unknown }>(id)!;
+      host.data = data;
+      return host.textContent!.trim();
+    };
+    const runtime = { english: render('#money-en'), german: render('#money-de') };
+    configure({ locale: 'fr-FR' });
+    const configured = render('#money-en');
+
+    // Build time: the built page's own languages decide, not this (English) page's.
+    const source = `<!doctype html><html lang="de-DE"><body>
+      <template data-component="price-tag"><b>{{ price | currency }}</b><slot></slot></template>
+      <p id="page">{{ price | currency }}</p>
+      <p id="nested" lang="fr-FR">{{ when | date:long }}</p>
+      <p id="per-use">{{ when | date:long:ja-JP }}</p>
+      <section lang="en-GB"><price-tag><i>{{ when | date:long }}</i></price-tag></section>
+    </body></html>`;
+    const read = (html: string) => {
+      const doc = parseHtml(html);
+      return {
+        page: doc.querySelector('#page')!.textContent,
+        nested: doc.querySelector('#nested')!.textContent,
+        perUse: doc.querySelector('#per-use')!.textContent,
+        component: doc.querySelector('section b')!.textContent,
+        slotted: doc.querySelector('section i')!.textContent,
+      };
+    };
+    const filters = { currency, date };
+    return {
+      runtime,
+      configured,
+      built: read(buildHtml(source, { data, filters, currency: 'EUR' })),
+      overridden: read(buildHtml(source, { data, filters, currency: 'EUR', locale: 'en-US' })),
+    };
+  });
+  expect(normalized(result.runtime)).toEqual({ english: '€1,234.50', german: '1.234,50 €' });
+  expect(spaces(result.configured)).toBe('1 234,50 €');
+  expect(normalized(result.built)).toEqual({
+    page: '1.234,50 €',
+    nested: '15 janvier 2025',
+    perUse: '2025年1月15日',
+    component: '€1,234.50',
+    slotted: '15 January 2025',
+  });
+  // A locale option overrides the page's languages; a per-use argument still wins.
+  expect(normalized(result.overridden)).toEqual({
+    page: '€1,234.50',
+    nested: 'January 15, 2025',
+    perUse: '2025年1月15日',
+    component: '€1,234.50',
+    slotted: 'January 15, 2025',
+  });
+});
