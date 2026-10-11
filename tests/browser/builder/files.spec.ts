@@ -28,7 +28,7 @@ test('buildPage renders folder components and reports the files beside each temp
       `<!doctype html><html><head><link rel="stylesheet" href="/site.css"></head><body>
         <greeting-card><span slot="title">Built</span></greeting-card>
         <greeting-card><span slot="title">Twice</span></greeting-card>
-        <render-template subscribe-to-action="loadStatus" on-success="status-badge"></render-template>
+        <use-template subscribe="loadStatus" on-success="status-badge"></use-template>
         <mystery-widget>Keep me</mystery-widget>
       </body></html>`,
       { loadComponent },
@@ -111,7 +111,7 @@ test('buildPage bundles a page under project and page prefixes and links only th
     const loadComponent = componentFolder('/tests/support/components/');
     const source = `<!doctype html><html><head><link rel="stylesheet" href="/site.css"></head><body>
       <greeting-card></greeting-card>
-      <render-template on-success="status-badge"></render-template></body></html>`;
+      <use-template on-success="status-badge"></use-template></body></html>`;
     const home = await buildPage(source, {
       loadComponent,
       bundle: { bundler, project: 'shop', page: 'home' },

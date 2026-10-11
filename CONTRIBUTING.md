@@ -7,6 +7,11 @@ implemented; the remaining builder pipeline and editor are planned.
 
 ## Organize changes by responsibility
 
+- The repository is an npm workspace: `@buildadiv/shared` (`packages/shared`, private),
+  `@buildadiv/query-template` (`packages/runtime`) and `@buildadiv/builder`
+  (`packages/builder`). Import another package only by name
+  (`@buildadiv/shared/path.js`), declare it in your `package.json`, and never reach in
+  with `../`. Published packages inline `shared` when packed.
 - Keep the four-package dependency rules: `shared` is independent; `runtime` and
   `builder` depend on shared utilities and never on each other.
 - Preserve documented package-root imports. Public entry points compose APIs;

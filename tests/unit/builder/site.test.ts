@@ -44,7 +44,8 @@ test('buildSite writes each page with a bundle of only the components it uses', 
 
 test('the CLI builds from a config file and reports usage errors', async () => {
   const run = promisify(execFile);
-  const cli = resolve('dist/packages/builder/node/cli.js');
+  // The packed CLI, exactly as @buildadiv/builder publishes it.
+  const cli = resolve('packages/builder/lib/cli.mjs');
   const { stdout } = await run('node', [
     cli,
     'build',

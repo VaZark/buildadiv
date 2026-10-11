@@ -1,4 +1,4 @@
-import { mutation, provider } from '/lib/buildadiv-runtime.min.js';
+import { mutation, query } from '/lib/query-template.min.js';
 
 interface LineItem {
   sku: string;
@@ -26,7 +26,7 @@ interface CatalogPage {
 }
 
 /** Success after a visible delay. Context turns the response into template-ready flags. */
-export const loadOrders = provider<unknown, Order[]>({
+export const loadOrders = query<unknown, Order[]>({
   url: '/api/orders?delay=700',
   provides: { tag: 'Order', key: 'id' },
   context: (response) => ({
@@ -36,10 +36,10 @@ export const loadOrders = provider<unknown, Order[]>({
 });
 
 /** A 204 response: the no-content state. */
-export const loadNoOrders = provider({ url: '/api/orders/none?delay=500' });
+export const loadNoOrders = query({ url: '/api/orders/none?delay=500' });
 
 /** An HTTP 503: the error state, with a hint computed in context. */
-export const loadOutage = provider({
+export const loadOutage = query({
   url: '/api/outage?delay=500',
   context: (_response, status) => ({
     hint: status === 503 ? 'The orders service is down. Try again shortly.' : null,
@@ -47,7 +47,7 @@ export const loadOutage = provider({
 });
 
 /** Slower than its 0.1 s timeout: the error state without a status code. */
-export const loadTooSlow = provider({ url: '/api/slow', timeout: 0.1 });
+export const loadTooSlow = query({ url: '/api/slow', timeout: 0.1 });
 
 /** Marks one order shipped; its response is reconciled into every list showing it. */
 export const shipOrder = mutation<{ id: string }, Order>({
@@ -59,7 +59,7 @@ export const shipOrder = mutation<{ id: string }, Order>({
 export const reopenOrders = mutation({ url: '/api/orders/reopen', invalidates: 'Order' });
 
 /** One page at a time: next/previous replace the page shown. */
-export const loadCatalogPage = provider<number, CatalogPage>({
+export const loadCatalogPage = query<number, CatalogPage>({
   url: (page) => `/api/catalog?page=${page}&size=3&delay=300`,
   items: (response) => response.items,
   paginated: {
@@ -75,7 +75,7 @@ export const loadCatalogPage = provider<number, CatalogPage>({
 });
 
 /** Pages accumulate: "Load more" appends the next page to one growing list. */
-export const loadCatalogFeed = provider<number, CatalogPage>({
+export const loadCatalogFeed = query<number, CatalogPage>({
   url: (page) => `/api/catalog?page=${page}&size=3&delay=300`,
   provides: { tag: 'Catalog', key: 'sku' },
   items: (response) => response.items,

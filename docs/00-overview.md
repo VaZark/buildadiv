@@ -12,14 +12,14 @@ AI can generate whole sites, but generating isn't the hard part anymore. Underst
 
 | | **Part 1: Runtime library** | **Part 2: Builder & editor** |
 |---|---|---|
-| **What** | Client-side rendering: templates, bindings, filters, `<render-template>`, providers and mutations, tags and cache | Parses existing HTML files, composes them with component tags, builds static HTML, with a visual editor on top |
-| **Places components with** | `<render-template>` | Component tags (Astro-style) |
+| **What** | Client-side rendering: templates, bindings, filters, `<use-template>`, queries and mutations, tags and cache | Parses existing HTML files, composes them with component tags, builds static HTML, with a visual editor on top |
+| **Places components with** | `<use-template>` | Component tags (Astro-style) |
 | **Fills values with** | `data-bind`, `data-bind-<attr>` | `{{ }}` (build time) |
 | **Runs** | In the browser | At build time and in the editor |
 | **Shipped as** | A standalone ES module (CDN or package manager) | The browser-based editor plus a CLI build |
 | **Needs the other part?** | **No.** Drop it into any page. | Yes. Its output uses the runtime for live regions. |
 
-- Component tags never reach the browser: the build expands them into static HTML. `<render-template>` is the only thing the runtime understands.
+- Component tags never reach the browser: the build expands them into static HTML. `<use-template>` is the only thing the runtime understands.
 - Both parts use the same **filters** and **slot rules**, written once in a shared package ([04](04-builder-and-editor.md#packages)).
 
 ## Goals
@@ -62,14 +62,14 @@ AI can generate whole sites, but generating isn't the hard part anymore. Underst
 | **Slot** | `<slot>` in a component: a hole filled with **markup written by whoever uses the component** | [01](01-templates.md#slots) |
 | **Filter** | A single-value transform in a binding pipeline: `price \| currency:EUR` | [01](01-templates.md#filters) |
 | **Fixture** | Named sample data for previewing a component | [01](01-templates.md#fixtures) |
-| **`<render-template>`** | The runtime element that **places** a component in the browser, with or without data | [02](02-rendering-and-actions.md#render-template) |
+| **`<use-template>`** | The runtime element that **places** a template from the page in the browser, with or without data | [02](02-rendering-and-actions.md#use-template) |
 | **Component tag** | `<modal-dialog>` in a page: **places** a component at build time; expanded into static HTML | [04](04-builder-and-editor.md#component-tags) |
 | **Action** | A named function in `api/` that makes an HTTP request. `action()` is the baseline helper | [02](02-rendering-and-actions.md#actions) |
-| **Provider** | An action that reads (`GET`, `QUERY`) | [02](02-rendering-and-actions.md#actions) |
+| **Query** | An action that reads (`GET`, `QUERY`) | [02](02-rendering-and-actions.md#actions) |
 | **Mutation** | An action that changes data (`POST`, `PUT`, `PATCH`, `DELETE`, …) | [02](02-rendering-and-actions.md#actions) |
 | **Context** | Built-in state fields plus extra fields an action computes; templates read `{ response, context }` | [02](02-rendering-and-actions.md#context) |
 | **Tag** | `{ tag, key }`: a global type plus an id path, used for caching and invalidation | [03](03-data-layer.md#tags) |
-| **Mounted** | Present in the tag registry because a subscribing `<render-template>` is on the page | [03](03-data-layer.md#tag-registry) |
+| **Mounted** | Present in the tag registry because a subscribing `<use-template>` is on the page | [03](03-data-layer.md#tag-registry) |
 | **Invalidate** | Drop cached data for a tag (or one item) so mounted queries refetch | [03](03-data-layer.md#invalidation) |
 | **Reconcile** | Upsert a mutation's response into the cache, with no refetch | [03](03-data-layer.md#reconciliation) |
 
@@ -92,9 +92,9 @@ A product list that loads from an API, shows a skeleton while loading, and updat
 **2. Actions** (`api/products.js`):
 
 ```js
-import { provider, mutation } from '../runtime/action.js';
+import { query, mutation } from '../runtime/action.js';
 
-export const loadProducts = provider({
+export const loadProducts = query({
   url: '/api/products',
   provides: { tag: 'Product', key: 'id' },
 });
@@ -110,12 +110,12 @@ export const renameProduct = mutation({
 
 ```html
 <ul>
-  <render-template
-    subscribe-to-action="loadProducts"
+  <use-template
+    subscribe="loadProducts"
     on-pending="product-skeleton"
     on-success="product-rows"
     on-error="error-message">
-  </render-template>
+  </use-template>
 </ul>
 ```
 

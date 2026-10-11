@@ -2,7 +2,7 @@
 
 Every attribute, option, default and event on one page. Explanations live in the linked docs.
 
-**Contents:** [Bindings vs slots vs placement](#bindings-vs-slots-vs-placement) · [Template attributes](#template-attributes) · [`<render-template>`](#render-template) · [Action helpers](#action-helpers) · [Action options](#action-options) · [Behavior functions](#behavior-functions) · [Context fields](#context-fields) · [Filters](#filters) · [Events](#events) · [Exports](#exports) · [Packages](#packages)
+**Contents:** [Bindings vs slots vs placement](#bindings-vs-slots-vs-placement) · [Template attributes](#template-attributes) · [`<use-template>`](#use-template) · [Action helpers](#action-helpers) · [Action options](#action-options) · [Behavior functions](#behavior-functions) · [Context fields](#context-fields) · [Filters](#filters) · [Events](#events) · [Exports](#exports) · [Packages](#packages)
 
 ---
 
@@ -15,7 +15,7 @@ From [01 · When to use what](01-templates.md#when-to-use-what).
 | `data-bind` / `data-bind-<attr>` | Fill | A value from data (text or attribute), at runtime |
 | `{{ value }}` | Fill | A value known at build time (part 2), outside `<template>` |
 | `<slot>` / `slot="name"` | Fill | Markup written by whoever uses the component |
-| `<render-template>` | Place | A component in the browser, with or without data |
+| `<use-template>` | Place | A template from the page in the browser, with or without data |
 | Component tag | Place | A component at build time (part 2) |
 
 ## Template attributes
@@ -28,7 +28,7 @@ From [01 · Templates](01-templates.md).
 | `data-bind="path \| filters"` | any element | Sets text (always `textContent`) |
 | `data-bind-<attr>="path \| filters"` | any element | Sets an attribute; URLs sanitized |
 | `<slot>` / `<slot name="x">` | inside a component | A hole for the user's markup; its content is preview content |
-| `slot="x"` | child of a component tag or `<render-template>` | Puts this element into the named slot |
+| `slot="x"` | child of a component tag or `<use-template>` | Puts this element into the named slot |
 | `data-accepts="array"` | `<template>` | Stamp once per item |
 | `data-item="name"` | `<template>` | Name for the current item |
 | `data-index="name"` | `<template>` | Name for the position |
@@ -39,15 +39,15 @@ From [01 · Templates](01-templates.md).
 | `data-action="fn"` | button, form, any element | Calls an action on click / submit |
 | `data-on="event"` | with `data-action` | Overrides the triggering event |
 
-## `<render-template>`
+## `<use-template>`
 
-From [02 · Rendering and actions](02-rendering-and-actions.md#render-template).
+From [02 · Rendering and actions](02-rendering-and-actions.md#use-template).
 
 | Attribute | Meaning |
 |---|---|
 | `template="name"` | Render a component directly, no action |
-| `load-from-action="fn"` | Load once, no subscription |
-| `subscribe-to-action="fn"` | Subscribe to tags, stay current, count as mounted |
+| `load="fn"` | Load once, no subscription |
+| `subscribe="fn"` | Subscribe to tags, stay current, count as mounted |
 | `on-pending` / `on-success` / `on-no-content` / `on-error` | Template per state; unmapped states do nothing |
 | children | Fill the rendered component's slots |
 
@@ -56,7 +56,7 @@ From [02 · Rendering and actions](02-rendering-and-actions.md#render-template).
 | Helper | Methods | Default method |
 |---|---|---|
 | `action()` | any | none (required) |
-| `provider()` | `GET`, `QUERY` | `GET` |
+| `query()` | `GET`, `QUERY` | `GET` |
 | `mutation()` | `POST`, `PUT`, `PATCH`, `DELETE`, … | `POST` |
 
 ## Action options
@@ -66,20 +66,20 @@ From [02 · Rendering and actions](02-rendering-and-actions.md#render-template).
 | `method` | all | per helper | [02](02-rendering-and-actions.md#actions) |
 | `url` | all | required; string or `(args) => string` | [02](02-rendering-and-actions.md#actions) |
 | `context` | all | none (built-ins only) | [02](02-rendering-and-actions.md#context) |
-| `send` | mutation, `QUERY` provider | `multipart` for forms | [02](02-rendering-and-actions.md#request-and-response-formats) |
+| `send` | mutation, `QUERY` query | `multipart` for forms | [02](02-rendering-and-actions.md#request-and-response-formats) |
 | `accepts` | all | `json` | [02](02-rendering-and-actions.md#request-and-response-formats) |
 | `timeout` | all | none (seconds) | [03](03-data-layer.md#failure-handling) |
 | `event` | all | function name (event prefix) | [02](02-rendering-and-actions.md#events) |
-| `provides` | provider | none; `{ tag, key }` | [03](03-data-layer.md#tags) |
-| `items` | provider | the response itself | [03](03-data-layer.md#tags) |
-| `sort` | provider | `null` | [03](03-data-layer.md#reconciliation) |
-| `paginated` | provider | none; `{ mode, firstPage, nextPage, refreshBehind }` | [02](02-rendering-and-actions.md#pagination) |
-| `paginated.refreshBehind` | provider | `1` | [02](02-rendering-and-actions.md#pagination) |
-| `refetchAfter` | provider | `respectCacheOr(Infinity)` | [03](03-data-layer.md#freshness) |
-| `keepUnusedFor` | provider | `respectCacheOr(Infinity)` | [03](03-data-layer.md#freshness) |
-| `persist` | provider | `false` | [03](03-data-layer.md#persistence) |
-| `onRefetchFailure` | provider | `'keep'` (or `'throw'`) | [03](03-data-layer.md#failure-handling) |
-| `onInvalidate` | provider | keep content (or `'pending'`) | [03](03-data-layer.md#invalidation) |
+| `provides` | query | none; `{ tag, key }` | [03](03-data-layer.md#tags) |
+| `items` | query | the response itself | [03](03-data-layer.md#tags) |
+| `sort` | query | `null` | [03](03-data-layer.md#reconciliation) |
+| `paginated` | query | none; `{ mode, firstPage, nextPage, refreshBehind }` | [02](02-rendering-and-actions.md#pagination) |
+| `paginated.refreshBehind` | query | `1` | [02](02-rendering-and-actions.md#pagination) |
+| `refetchAfter` | query | `respectCacheOr(Infinity)` | [03](03-data-layer.md#freshness) |
+| `keepUnusedFor` | query | `respectCacheOr(Infinity)` | [03](03-data-layer.md#freshness) |
+| `persist` | query | `false` | [03](03-data-layer.md#persistence) |
+| `onRefetchFailure` | query | `'keep'` (or `'throw'`) | [03](03-data-layer.md#failure-handling) |
+| `onInvalidate` | query | keep content (or `'pending'`) | [03](03-data-layer.md#invalidation) |
 | `invalidates` | mutation | none; `'Tag'`, `['A', 'B']`, `{ tag, key }`, `{ tag, id }` | [03](03-data-layer.md#invalidation) |
 | `reconciles` | mutation | none; `{ tag, key }` | [03](03-data-layer.md#reconciliation) |
 
@@ -128,35 +128,40 @@ Defined once in `shared`; used by runtime bindings and build-time `{{ }}`.
 
 `functionName:event` on `document`. See [02](02-rendering-and-actions.md#events).
 
-`before:request` → `pending` → `after:request` → `success` | `no-content` | `error` (`timeout` first, if it applies) → `finally:request`, with `before:render` / `after:render` around each `<render-template>` update, and `invalidate:Type` per invalidated tag.
+`before:request` → `pending` → `after:request` → `success` | `no-content` | `error` (`timeout` first, if it applies) → `finally:request`, with `before:render` / `after:render` around each `<use-template>` update, and `invalidate:Type` per invalidated tag.
 
 ## Exports
 
-What a project imports from the runtime package:
+`@buildadiv/query-template` (one file, `lib/query-template.min.js`) exports:
 
-| Module | Exports |
+| Group | Exports |
 |---|---|
-| `runtime/index.js` | `configure` |
-| `runtime/action.js` | `action`, `provider`, `mutation`, `HttpMethod` |
-| `runtime/formats.js` | `json`, `text`, `multipart`, `urlencoded` |
-| `runtime/cache.js` | `respectCacheOr`, `defaultItems`, `mergeInfinite`, `mergePages` |
-| `runtime/stores.js` | `localStore`, `sessionStore`, `indexedDbStore` |
-| `lib/buildadiv-runtime.min.js` | Everything above, as one standalone minified file |
-| `runtime/filters.js` | `currency`, `number`, `percent`, `date`, `relativeTime`, `upper`, `lower`, `truncate` (re-exported from `shared`) |
+| Setup | `configure`; the `<use-template>` element is registered on import (type: `UseTemplate`) |
+| Actions | `action`, `query`, `mutation`, `HttpMethod` |
+| Formats | `json`, `text`, `multipart`, `urlencoded` |
+| Cache defaults | `respectCacheOr`, `defaultItems`, `mergeInfinite`, `mergePages` |
+| Stores | `localStore`, `sessionStore`, `indexedDbStore` |
+| Filters | `currency`, `number`, `percent`, `date`, `relativeTime`, `upper`, `lower`, `truncate` (from `shared`) |
+
+`@buildadiv/builder` exports `buildPage`, `buildHtml`, `expandComponents`,
+`removeStaticDefinitions`, `componentFolder`, `siteComponents`, `bundleName`,
+`parseHtml` and `serializeHtml`; `@buildadiv/builder/node` exports `buildSite`,
+`viteBundler`, `nodeComponentFolder` and `parseHtmlNode`; the `buildadiv` CLI runs
+`buildadiv build --config buildadiv.config.js`.
 
 ## Packages
 
 From [04 · Packages](04-builder-and-editor.md#packages).
 
-| Package | Contains | May import from |
-|---|---|---|
-| `shared` | Filters, filter-pipeline parser, path resolution, slot-filling rules | nothing else in the repo |
-| `runtime` | Part 1: `<render-template>`, binder, actions, tags, cache, events | `shared` |
-| `builder` | Part 2: HTML parsing, component tags, `{{ }}`, build pipeline | `shared` |
-| `editor` | Part 2: the browser editor | `shared`, `runtime`, `builder` |
+| Folder | npm name | Contains | May import from |
+|---|---|---|---|
+| `shared` | `@buildadiv/shared` (private) | Filters, filter-pipeline parser, path resolution, slot-filling rules | nothing else in the repo |
+| `runtime` | `@buildadiv/query-template` | Part 1: `<use-template>`, binder, actions, tags, cache, events | `shared` |
+| `builder` | `@buildadiv/builder` | Part 2: HTML parsing, component tags, `{{ }}`, components, bundles, CLI | `shared` |
+| `editor` | `@buildadiv/editor` (planned) | Part 2: the browser editor | `shared`, `runtime`, `builder` |
 
 TypeScript exports include separate request/query/write interfaces, GET/QUERY
-provider interfaces, mutation options, typed provider/mutation action functions,
+query interfaces, mutation options, typed query/mutation action functions,
 and the normalized role union. Forbidden role fields are `never`; GET encoders
 and read methods on mutations fail type checking. HTTP extension methods remain
 available through the baseline `action()` helper.

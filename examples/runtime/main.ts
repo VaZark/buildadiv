@@ -1,5 +1,5 @@
-import { configure, currency } from '/lib/buildadiv-runtime.min.js';
-import type { RenderTemplate } from '/lib/buildadiv-runtime.min.js';
+import { configure, currency } from '/lib/query-template.min.js';
+import type { UseTemplate } from '/lib/query-template.min.js';
 import * as actions from './api/gallery.js';
 
 configure({ actions: { ...actions }, filters: { currency } });
@@ -20,7 +20,7 @@ document.addEventListener('click', (event) => {
 
 // A direct template has no action: assigning `.data` renders it.
 document.querySelector('#fill-note')!.addEventListener('click', () => {
-  document.querySelector<RenderTemplate>('#note')!.data = {
+  document.querySelector<UseTemplate>('#note')!.data = {
     title: 'Filled from .data',
     author: 'You',
   };

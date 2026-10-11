@@ -8,7 +8,7 @@
 
 | Version | Scope |
 |---|---|
-| **v1** | `shared`: filters, pipeline parser, path resolution, slot rules. Part 1: the runtime library (templates, bindings, slots, `<render-template>`, providers and mutations, tags, cache). Part 2: the builder (HTML parsing, component tags, `{{ }}`, build) and the browser editor |
+| **v1** | `shared`: filters, pipeline parser, path resolution, slot rules. Part 1: the runtime library (templates, bindings, slots, `<use-template>`, queries and mutations, tags, cache). Part 2: the builder (HTML parsing, component tags, `{{ }}`, build) and the browser editor |
 | **v1.1** | The template/action linter. Not a blocker for 1.0 |
 | **v2+** | An MCP server exposing the project to external agents. Opt-in |
 
@@ -24,7 +24,7 @@ Actions don't declare a schema in our own format. Linting has two halves:
 **Lint hooks**, loaded only while linting:
 
 1. Generate the shape of every template.
-2. For each `<render-template>` with `load-from-action` or `subscribe-to-action`, take the action's return type. It may be a union (`void`, a success type, a failure type, …).
+2. For each `<use-template>` with `load` or `subscribe`, take the action's return type. It may be a union (`void`, a success type, a failure type, …).
 3. Check that **every template the element registers** (`on-pending`, `on-success`, `on-no-content`, `on-error`) is satisfied by **at least one** of those types.
 
 - The `context` function itself isn't tested; only the `{ response, context }` return types are.
@@ -46,7 +46,7 @@ There is **no built-in agent**. The project exposes its capabilities over MCP, a
 
 - Input: a framework component. Output: a component folder in this format.
 - Preserve the interface: **props that carry data become bindings**; **`children` and render props that carry markup become slots**; events stay events.
-- Move data fetching and loading/error states into an `api/` provider or mutation.
+- Move data fetching and loading/error states into an `api/` query or mutation.
 - Add a `PORT_REPORT.md` listing what ported cleanly, what was restructured, which dependencies were replaced (and with what), and what needs human review.
 - Never add a framework dependency to make a port work.
 

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { provider } from '../../../packages/runtime/action.js';
+import { query } from '../../../packages/runtime/action.js';
 import { subscribe } from '../../../packages/runtime/data/queries.js';
 import { named, reset, tick } from '../../support/runtime.js';
 
@@ -12,7 +12,7 @@ test('concurrent calls and subscribers share a request; built-in context fields 
     await tick();
     return new Response('[{"id":1}]');
   };
-  const load = named(provider({ url: '/', context: () => ({ pending: true, count: 1 }) }));
+  const load = named(query({ url: '/', context: () => ({ pending: true, count: 1 }) }));
   const [a, b] = await Promise.all([load(), load()]);
   assert.equal(calls, 1);
   assert.equal(a, b);
@@ -33,17 +33,17 @@ test('distinct argument caches, QUERY bodies and age-based refetch are independe
     calls.push({ url: String(url), options: options || {} });
     return new Response('[{"id":1}]');
   };
-  const load = named(provider<{ id: number }>({ url: (args) => '/item/' + args.id }));
+  const load = named(query<{ id: number }>({ url: (args) => '/item/' + args.id }));
   await load({ id: 1 });
   await load({ id: 2 });
   await load({ id: 1 });
   assert.equal(calls.length, 2);
   const { json } = await import('../../../packages/runtime/formats.js');
-  const query = named(provider({ method: 'QUERY', url: '/search', send: json }));
-  await query({ text: 'hello' });
+  const search = named(query({ method: 'QUERY', url: '/search', send: json }));
+  await search({ text: 'hello' });
   assert.equal(calls.at(-1)!.options.method, 'QUERY');
   assert.equal(calls.at(-1)!.options.body, '{"text":"hello"}');
-  const timed = named(provider({ url: '/timed', refetchAfter: 0.02 }));
+  const timed = named(query({ url: '/timed', refetchAfter: 0.02 }));
   const off = subscribe(timed, () => {});
   await timed();
   await new Promise((resolve) => setTimeout(resolve, 35));
@@ -57,7 +57,7 @@ test('a failing subscriber is reported without changing the request outcome', as
   const reported: unknown[] = [];
   const log = console.error;
   console.error = (error: unknown) => reported.push(error);
-  const load = named(provider({ url: '/' }));
+  const load = named(query({ url: '/' }));
   const seen: string[] = [];
   const offBroken = subscribe(load, (result) => {
     if (result.context.success) throw new Error('render failed');

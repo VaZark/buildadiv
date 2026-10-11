@@ -5,28 +5,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Buildadiv · Vanilla shop</title>
     <link rel="stylesheet" href="./style.css" />
+    <!-- Workspace packages import the private shared package by name; map it for the browser. -->
+    <script type="importmap">
+      { "imports": { "@buildadiv/shared/": "/packages/shared/" } }
+    </script>
     <script type="module" src="./main.js"></script>
   </head>
   <body>
     <h1>Vanilla shop</h1>
     <p>Native browser imports, HTML templates, and ordinary event listeners.</p>
-    <render-template id="layout" template="panel">
+    <use-template id="layout" template="panel">
       <h2 slot="heading">Products</h2>
       <p>The list stays current after mutations.</p>
-    </render-template>
+    </use-template>
     <ul id="products">
-      <render-template
-        subscribe-to-action="loadProducts"
+      <use-template
+        subscribe="loadProducts"
         on-pending="pending"
         on-success="product-rows"
         on-error="failure"
-      ></render-template>
+      ></use-template>
     </ul>
-    <render-template
-      id="count"
-      subscribe-to-action="loadProducts"
-      on-success="count"
-    ></render-template>
+    <use-template id="count" subscribe="loadProducts" on-success="count"></use-template>
     <button id="rename">Rename scarf</button>
     <button data-action="importProducts">Import products</button>
     <template data-component="panel"

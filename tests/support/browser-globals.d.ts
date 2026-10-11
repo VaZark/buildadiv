@@ -1,5 +1,5 @@
 import type { Action } from '../../packages/runtime/contracts/actions.js';
-import type { RenderTemplate } from '../../packages/runtime/dom/element.js';
+import type { UseTemplate } from '../../packages/runtime/dom/element.js';
 
 declare global {
   interface Window {
@@ -10,7 +10,7 @@ declare global {
     timeoutEvents: string[];
     formResult: { type: string; body: string; method: string } | null;
     customArgs: unknown;
-    detached: RenderTemplate;
+    detached: UseTemplate;
     viewportTest: Action<number>;
     invalidateViewport: Action;
     greetingBehaviorLoads?: number;

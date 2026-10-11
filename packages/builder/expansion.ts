@@ -1,8 +1,8 @@
-import type { DomRoot } from '../shared/types.js';
+import type { DomRoot } from '@buildadiv/shared/types.js';
 import type { ExpansionOptions } from './contracts.js';
-import { fallback } from '../shared/filters.js';
-import { fillSlots, cloneSlotContent } from '../shared/slots.js';
-import { safeAttribute } from '../shared/attributes.js';
+import { fallback } from '@buildadiv/shared/filters.js';
+import { fillSlots, cloneSlotContent } from '@buildadiv/shared/slots.js';
+import { safeAttribute } from '@buildadiv/shared/attributes.js';
 import { collectDefinitions } from './definitions.js';
 import { interpolate } from './interpolation.js';
 
@@ -69,7 +69,7 @@ export function expandComponents<Root extends DomRoot>(
     }
     const element = node as Element;
     const name = element.localName;
-    if (name === 'template' || name === 'render-template') return;
+    if (name === 'template' || name === 'use-template') return;
     const definition = definitions.get(name);
     if (definition) {
       if (stack.includes(name)) throw new Error(`Component cycle: ${[...stack, name].join(' → ')}`);

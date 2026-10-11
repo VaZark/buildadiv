@@ -1,5 +1,5 @@
 import type { ComponentFile, ComponentLoader } from './components.js';
-import type { DomRoot, FilterRegistry } from '../shared/types.js';
+import type { DomRoot, FilterRegistry } from '@buildadiv/shared/types.js';
 
 export interface ExpansionOptions {
   /** Definitions: template elements, HTML strings, parsed roots, or component files with assets. */

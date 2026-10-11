@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Buildadiv · Manual playground</title>
     <link rel="stylesheet" href="./style.css" />
+    <!-- Workspace packages import the private shared package by name; map it for the browser. -->
+    <script type="importmap">
+      { "imports": { "@buildadiv/shared/": "/packages/shared/" } }
+    </script>
     <script type="module" src="./main.js"></script>
   </head>
   <body>
@@ -27,11 +31,11 @@
           Expect: the count rises by one per click, although the cached data never goes stale.
         </p>
         <ul class="rows">
-          <render-template
-            subscribe-to-action="loadProducts"
+          <use-template
+            subscribe="loadProducts"
             on-pending="loading"
             on-success="product-names"
-          ></render-template>
+          ></use-template>
         </ul>
         <button data-action="loadProducts">Refresh products</button>
       </section>
@@ -47,10 +51,7 @@
           <em>Reset demo data</em> to restore it.
         </p>
         <ul class="rows">
-          <render-template
-            subscribe-to-action="loadProducts"
-            on-success="product-rows"
-          ></render-template>
+          <use-template subscribe="loadProducts" on-success="product-rows"></use-template>
         </ul>
       </section>
 
@@ -64,11 +65,11 @@
           <em>Refresh counts</em>, both <code>page=2</code> and <code>page=5</code> are listed; the
           second click is never dropped.
         </p>
-        <render-template
-          subscribe-to-action="loadPage"
+        <use-template
+          subscribe="loadPage"
           on-pending="loading"
           on-success="page-rows"
-        ></render-template>
+        ></use-template>
         <button data-page="2">Page 2</button>
         <button data-page="5">Page 5</button>
       </section>
@@ -82,12 +83,8 @@
           Expect: “waiting for the server”, then “loaded with HTTP 200”. The failing request shows
           its own context hint: “The server answered 500”.
         </p>
-        <render-template
-          subscribe-to-action="loadStatus"
-          on-pending="status"
-          on-success="status"
-        ></render-template>
-        <render-template subscribe-to-action="loadFailure" on-error="failure"></render-template>
+        <use-template subscribe="loadStatus" on-pending="status" on-success="status"></use-template>
+        <use-template subscribe="loadFailure" on-error="failure"></use-template>
         <button data-action="loadStatus">Reload status</button>
       </section>
 
@@ -101,11 +98,11 @@
           <code>TypeError</code> per request (from the pending state), and the event log shows
           <code>loadCareless:success</code>, not <code>error</code>.
         </p>
-        <render-template
-          subscribe-to-action="loadCareless"
+        <use-template
+          subscribe="loadCareless"
           on-pending="loading"
           on-success="careless"
-        ></render-template>
+        ></use-template>
         <button data-action="loadCareless">Reload careless</button>
       </section>
 
@@ -119,15 +116,9 @@
           unique” from the broken region, and the event log shows
           <code>loadBrokenRows:success</code> with no <code>error</code>.
         </p>
-        <render-template
-          subscribe-to-action="loadBrokenRows"
-          on-success="product-count"
-        ></render-template>
+        <use-template subscribe="loadBrokenRows" on-success="product-count"></use-template>
         <ul class="rows">
-          <render-template
-            subscribe-to-action="loadBrokenRows"
-            on-success="duplicate-rows"
-          ></render-template>
+          <use-template subscribe="loadBrokenRows" on-success="duplicate-rows"></use-template>
         </ul>
         <button data-action="loadBrokenRows">Reload rows</button>
       </section>
@@ -136,7 +127,7 @@
     <aside class="monitor">
       <h2>Server requests</h2>
       <ul class="rows">
-        <render-template subscribe-to-action="loadCalls" on-success="call-rows"></render-template>
+        <use-template subscribe="loadCalls" on-success="call-rows"></use-template>
       </ul>
       <button data-action="loadCalls">Refresh counts</button>
       <button data-action="resetDemo">Reset demo data</button>

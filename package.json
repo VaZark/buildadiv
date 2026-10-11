@@ -2,24 +2,25 @@
   "name": "buildadiv",
   "version": "0.1.0",
   "private": true,
-  "bin": {
-    "buildadiv": "dist/packages/builder/node/cli.js"
-  },
+  "workspaces": [
+    "packages/*"
+  ],
   "type": "module",
   "scripts": {
-    "build": "npm run clean && tsc && node dist/scripts/build.js && vp pack && npm run build:site",
-    "typecheck": "tsc --noEmit",
+    "build": "npm run clean && node node_modules/typescript/bin/tsc -b && node dist/scripts/build.js && npm run build:lib && npm run build:site",
+    "typecheck": "node node_modules/typescript/bin/tsc -b",
     "lint": "vp lint --deny-warnings",
     "test": "npm run build && npm run test:unit",
     "test:browser": "npm run build && playwright test",
     "check": "npm run build && node dist/scripts/validate-architecture.js && npm run format:check && npm run lint && npm run test:unit && playwright test",
     "serve-examples": "npm run build && node dist/tests/support/server.js",
-    "clean": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\"",
+    "clean": "node -e \"const fs=require('node:fs');for(const p of ['dist',...['shared','runtime','builder'].flatMap((n)=>[`packages/${n}/dist`,`packages/${n}/lib`,`packages/${n}/tsconfig.tsbuildinfo`])])fs.rmSync(p,{recursive:true,force:true})\"",
     "test:unit": "node --test --test-isolation=none dist/tests/unit/**/*.test.js",
     "validate:architecture": "npm run build && node dist/scripts/validate-architecture.js",
     "format": "vp fmt",
     "format:check": "vp fmt --check",
-    "build:site": "node dist/packages/builder/node/cli.js build --config dist/examples/site/buildadiv.config.js"
+    "build:site": "node packages/builder/lib/cli.mjs build --config dist/examples/site/buildadiv.config.js",
+    "build:lib": "npm run build:lib --workspaces --if-present && node dist/scripts/build.js --libs"
   },
   "devDependencies": {
     "@playwright/test": "^1.56.0",

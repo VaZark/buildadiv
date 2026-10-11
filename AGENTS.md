@@ -6,23 +6,23 @@ Start here. This file is the entry point for humans and coding agents. It says w
 
 ## The project in one paragraph
 
-A small toolkit for building websites from plain HTML, CSS and JavaScript, in two parts. **Part 1** is a purely client-side **runtime library**: HTML templates with data bindings, a `<render-template>` element, and RTK-Query-style data fetching with tags and caching. It works on any page with no build step. **Part 2** is a **builder and visual editor**: it parses existing HTML files, composes them with Astro-style component tags, and builds static HTML that uses the runtime for its live regions. Logic both parts need, such as filters, lives in a shared package. The editor runs entirely in the browser and combines a component library viewer (like Storybook), a visual canvas (like GrapesJS) and a synced code/design view (like Dreamweaver).
+A small toolkit for building websites from plain HTML, CSS and JavaScript, in two parts. **Part 1** is a purely client-side **runtime library**: HTML templates with data bindings, a `<use-template>` element, and RTK-Query-style data fetching with tags and caching. It works on any page with no build step. **Part 2** is a **builder and visual editor**: it parses existing HTML files, composes them with Astro-style component tags, and builds static HTML that uses the runtime for its live regions. Logic both parts need, such as filters, lives in a shared package. The editor runs entirely in the browser and combines a component library viewer (like Storybook), a visual canvas (like GrapesJS) and a synced code/design view (like Dreamweaver).
 
 ## Where to read
 
 Read in order the first time; afterwards, jump to the topic you need.
 
-| Doc                                                                    | Read it for                                                                                        |
-| ---------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| [`docs/00-overview.md`](docs/00-overview.md)                           | Goals, non-goals, principles, the two parts, glossary, and one end-to-end example                  |
-| [`docs/01-templates.md`](docs/01-templates.md)                         | Part 1: components, when to use bindings vs slots, filters, lists, conditionals, fixtures, CSS     |
-| [`docs/02-rendering-and-actions.md`](docs/02-rendering-and-actions.md) | Part 1: `<render-template>`, actions / providers / mutations, context, pagination, formats, events |
-| [`docs/03-data-layer.md`](docs/03-data-layer.md)                       | Part 1: tags, cache, freshness, persistence, invalidation, reconciliation                          |
-| [`docs/04-builder-and-editor.md`](docs/04-builder-and-editor.md)       | Part 2: parsing HTML, component tags, `{{ }}`, build output, the editor, package layout            |
-| [`docs/05-reference.md`](docs/05-reference.md)                         | Every attribute, option, default and event on one page                                             |
-| [`docs/06-roadmap.md`](docs/06-roadmap.md)                             | v1 / v1.1 / v2 scope, linting, MCP, open questions                                                 |
-| [`docs/07-decisions.md`](docs/07-decisions.md)                         | What was decided, and what each decision replaced                                                  |
-| [`docs/08-code-map.md`](docs/08-code-map.md)                           | Source responsibilities, dependency flow and validation commands                                   |
+| Doc                                                                    | Read it for                                                                                    |
+| ---------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| [`docs/00-overview.md`](docs/00-overview.md)                           | Goals, non-goals, principles, the two parts, glossary, and one end-to-end example              |
+| [`docs/01-templates.md`](docs/01-templates.md)                         | Part 1: components, when to use bindings vs slots, filters, lists, conditionals, fixtures, CSS |
+| [`docs/02-rendering-and-actions.md`](docs/02-rendering-and-actions.md) | Part 1: `<use-template>`, actions / queries / mutations, context, pagination, formats, events  |
+| [`docs/03-data-layer.md`](docs/03-data-layer.md)                       | Part 1: tags, cache, freshness, persistence, invalidation, reconciliation                      |
+| [`docs/04-builder-and-editor.md`](docs/04-builder-and-editor.md)       | Part 2: parsing HTML, component tags, `{{ }}`, build output, the editor, package layout        |
+| [`docs/05-reference.md`](docs/05-reference.md)                         | Every attribute, option, default and event on one page                                         |
+| [`docs/06-roadmap.md`](docs/06-roadmap.md)                             | v1 / v1.1 / v2 scope, linting, MCP, open questions                                             |
+| [`docs/07-decisions.md`](docs/07-decisions.md)                         | What was decided, and what each decision replaced                                              |
+| [`docs/08-code-map.md`](docs/08-code-map.md)                           | Source responsibilities, dependency flow and validation commands                               |
 
 ## Rules for coding agents
 
@@ -34,7 +34,8 @@ Use [CONTRIBUTING.md](CONTRIBUTING.md) for the full coding/review guidelines and
 - Keep documented public imports as small entry points. Group internals in semantic nested folders; avoid mixed-responsibility modules.
 - Keep value imports acyclic; inject typed coordinator callbacks where needed. Use type-only imports for contracts.
 - Package code stays browser-compatible. Node-only adapters (e.g. the Vite+ bundler) live in `packages/<package>/node/` and are passed into core code as functions.
-- Four packages: `shared`, `runtime`, `builder`, `editor` ([04](docs/04-builder-and-editor.md#packages)).
+- Four workspace packages ([04](docs/04-builder-and-editor.md#packages)): `shared` (`@buildadiv/shared`, private), `runtime` (`@buildadiv/query-template`), `builder` (`@buildadiv/builder`), `editor` (planned). Each has its own `package.json`, tsconfig and build.
+- Cross-package imports use the package name (`@buildadiv/shared/path.js`) and a declared dependency; never `../` into another package. Published packages inline `shared`.
 - `shared` imports from no other package. `runtime` and `builder` import from `shared` but **never from each other**. Part 1 stands alone.
 - Logic needed both at build time and in the browser (filters, the filter-pipeline parser, path resolution, slot filling) goes in `shared`, written once.
 - Don't add server rendering or server template-engine integration. The runtime is client-side; only our own build pre-renders, through component tags.
@@ -50,7 +51,7 @@ Use [CONTRIBUTING.md](CONTRIBUTING.md) for the full coding/review guidelines and
 
 **Data**
 
-- Component JS never fetches. All fetching and mutation lives in `api/` as providers and mutations.
+- Component JS never fetches. All fetching and mutation lives in `api/` as queries and mutations.
 - Action names are unique across the project (events are named after them).
 
 **Process**

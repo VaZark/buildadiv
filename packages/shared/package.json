@@ -1,0 +1,10 @@
+{
+  "name": "@buildadiv/shared",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Filters, pipelines, paths and slot rules shared by query-template and the builder. Never published: each product bundles what it uses.",
+  "type": "module",
+  "exports": {
+    "./*": "./dist/*"
+  }
+}

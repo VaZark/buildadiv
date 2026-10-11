@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import type { RenderTemplate } from '../../../packages/runtime/dom/element.js';
+import type { UseTemplate } from '../../../packages/runtime/dom/element.js';
 import { setup, mount } from '../../support/browser.js';
 
 test('invalidation refreshes subscribers but load-once regions remain unchanged', async ({
@@ -9,7 +9,7 @@ test('invalidation refreshes subscribers but load-once regions remain unchanged'
   const errors = await setup(page, request);
   await mount(
     page,
-    '<render-template id="once" load-from-action="loadProducts" on-success="product-rows"></render-template>',
+    '<use-template id="once" load="loadProducts" on-success="product-rows"></use-template>',
   );
   await expect(page.locator('#once li')).toHaveCount(2);
   await page.locator('[data-action="importProducts"]').click();
@@ -41,10 +41,10 @@ test('states distinguish 204, empty list, HTTP failure and timeout; document eve
   await mount(
     page,
     `<template data-component="nothing"><p>No content</p></template>
-    <render-template id="empty" load-from-action="emptyTest" on-no-content="nothing"></render-template>
-    <render-template id="zero" load-from-action="zeroTest" on-success="product-rows" on-no-content="nothing"></render-template>
-    <render-template id="error" load-from-action="errorTest" on-error="failure"></render-template>
-    <render-template id="slow" load-from-action="slowTest" on-error="failure"></render-template>`,
+    <use-template id="empty" load="emptyTest" on-no-content="nothing"></use-template>
+    <use-template id="zero" load="zeroTest" on-success="product-rows" on-no-content="nothing"></use-template>
+    <use-template id="error" load="errorTest" on-error="failure"></use-template>
+    <use-template id="slow" load="slowTest" on-error="failure"></use-template>`,
     {
       emptyTest: { url: '/api/empty' },
       zeroTest: { url: '/api/zero' },
@@ -112,7 +112,7 @@ test('disconnect releases subscriptions; remount restores cached data', async ({
 }) => {
   const errors = await setup(page, request);
   await page.evaluate(() => {
-    window.detached = document.querySelector<RenderTemplate>('#products render-template')!;
+    window.detached = document.querySelector<UseTemplate>('#products use-template')!;
     window.detached.remove();
     document.querySelector('#count')!.remove();
   });
@@ -125,7 +125,7 @@ test('disconnect releases subscriptions; remount restores cached data', async ({
   expect(errors).toEqual([]);
 });
 
-test('a provider trigger refetches fresh data; render failures leave the request successful', async ({
+test('a query trigger refetches fresh data; render failures leave the request successful', async ({
   page,
   request,
 }) => {
@@ -141,7 +141,7 @@ test('a provider trigger refetches fresh data; render failures leave the request
     <template data-component="duplicate-rows" data-accepts="array" data-item="row" data-key="missing">
       <li data-bind="row.name">Row</li>
     </template>
-    <render-template id="broken" subscribe-to-action="loadProducts" on-success="duplicate-rows"></render-template>`,
+    <use-template id="broken" subscribe="loadProducts" on-success="duplicate-rows"></use-template>`,
   );
   await page.locator('#refresh').click();
   await expect

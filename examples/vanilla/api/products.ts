@@ -1,4 +1,4 @@
-import { provider, mutation } from '../../../packages/runtime/action.js';
+import { query, mutation } from '../../../packages/runtime/action.js';
 import { json } from '../../../packages/runtime/formats.js';
 interface Product {
   id: number;
@@ -8,7 +8,7 @@ interface Product {
 }
 
 /** Reads stay in api/ and provide ids for live list reconciliation. */
-export const loadProducts = provider<unknown, Product[]>({
+export const loadProducts = query<unknown, Product[]>({
   url: '/api/products',
   provides: { tag: 'Product', key: 'id' },
 });

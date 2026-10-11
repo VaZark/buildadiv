@@ -1,5 +1,5 @@
-import { fallback } from '../../shared/filters.js';
-import type { FilterRegistry } from '../../shared/types.js';
+import { fallback } from '@buildadiv/shared/filters.js';
+import type { FilterRegistry } from '@buildadiv/shared/types.js';
 import type { RegisteredAction, RegistrableAction } from '../contracts/actions.js';
 import type { Store } from '../contracts/storage.js';
 

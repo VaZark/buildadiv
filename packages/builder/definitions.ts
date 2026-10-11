@@ -1,5 +1,5 @@
 import type { ComponentFile } from './components.js';
-import type { DomRoot } from '../shared/types.js';
+import type { DomRoot } from '@buildadiv/shared/types.js';
 import { componentTemplates } from './components.js';
 import { parseHtml } from './html.js';
 
@@ -41,7 +41,7 @@ export function collectDefinitions(
     seen.add(template);
     const name = template.getAttribute('data-component');
     if (!isStaticComponentName(name)) return;
-    if (!/^[a-z][a-z0-9]*(?:-[a-z0-9]+)+$/.test(name) || name === 'render-template') {
+    if (!/^[a-z][a-z0-9]*(?:-[a-z0-9]+)+$/.test(name) || name === 'use-template') {
       throw new Error(`Invalid static component name: ${name}`);
     }
     if (definitions.has(name)) throw new Error(`Duplicate component: ${name}`);

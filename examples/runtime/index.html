@@ -11,7 +11,7 @@
     <header>
       <h1>Runtime gallery</h1>
       <p>
-        Every <code>&lt;render-template&gt;</code> pattern on one page, using only the standalone
+        Every <code>&lt;use-template&gt;</code> pattern on one page, using only the standalone
         runtime file. Templates live in this page; styling is ordinary global CSS.
       </p>
     </header>
@@ -26,46 +26,46 @@
       <div class="grid">
         <article class="panel" id="state-success">
           <h3>Success</h3>
-          <render-template
-            subscribe-to-action="loadOrders"
+          <use-template
+            subscribe="loadOrders"
             on-pending="state-pending"
             on-success="order-summary"
             on-no-content="state-empty"
             on-error="state-error"
-          ></render-template>
+          ></use-template>
           <button data-action="loadOrders">Reload</button>
         </article>
         <article class="panel" id="state-empty">
           <h3>No content (204)</h3>
-          <render-template
-            subscribe-to-action="loadNoOrders"
+          <use-template
+            subscribe="loadNoOrders"
             on-pending="state-pending"
             on-success="order-summary"
             on-no-content="state-empty"
             on-error="state-error"
-          ></render-template>
+          ></use-template>
           <button data-action="loadNoOrders">Reload</button>
         </article>
         <article class="panel" id="state-error">
           <h3>Error (HTTP 503)</h3>
-          <render-template
-            subscribe-to-action="loadOutage"
+          <use-template
+            subscribe="loadOutage"
             on-pending="state-pending"
             on-success="order-summary"
             on-no-content="state-empty"
             on-error="state-error"
-          ></render-template>
+          ></use-template>
           <button data-action="loadOutage">Retry</button>
         </article>
         <article class="panel" id="state-timeout">
           <h3>Error (timeout)</h3>
-          <render-template
-            subscribe-to-action="loadTooSlow"
+          <use-template
+            subscribe="loadTooSlow"
             on-pending="state-pending"
             on-success="order-summary"
             on-no-content="state-empty"
             on-error="state-error"
-          ></render-template>
+          ></use-template>
           <button data-action="loadTooSlow">Retry</button>
         </article>
       </div>
@@ -82,22 +82,21 @@
         reconciled into the cache: only that row updates, without refetching.
       </p>
       <ul class="orders">
-        <render-template
-          subscribe-to-action="loadOrders"
+        <use-template
+          subscribe="loadOrders"
           on-pending="state-pending"
           on-success="order-rows"
           on-error="state-error"
-        ></render-template>
+        ></use-template>
       </ul>
     </section>
 
     <section id="modes">
-      <h2>3 · subscribe-to-action vs load-from-action</h2>
+      <h2>3 · subscribe vs load</h2>
       <p>
-        Both lists start from the same <code>loadOrders</code> data. A
-        <code>subscribe-to-action</code> region is <strong>mounted</strong>: reconciliation,
-        invalidation and freshness keep it current. A <code>load-from-action</code> region calls the
-        action once, renders the result and stops listening.
+        Both lists start from the same <code>loadOrders</code> data. A <code>subscribe</code> region
+        is <strong>mounted</strong>: reconciliation, invalidation and freshness keep it current. A
+        <code>load</code> region calls the action once, renders the result and stops listening.
       </p>
       <ol class="steps">
         <li><em>Mark shipped</em> on an order in section 2: reconciled, no request.</li>
@@ -108,22 +107,16 @@
       </ol>
       <div class="grid">
         <article class="panel" id="subscribed">
-          <h3>subscribe-to-action</h3>
+          <h3>subscribe</h3>
           <ul>
-            <render-template
-              subscribe-to-action="loadOrders"
-              on-success="order-status"
-            ></render-template>
+            <use-template subscribe="loadOrders" on-success="order-status"></use-template>
           </ul>
           <p class="muted">Follows every change.</p>
         </article>
         <article class="panel" id="loaded-once">
-          <h3>load-from-action</h3>
+          <h3>load</h3>
           <ul>
-            <render-template
-              load-from-action="loadOrders"
-              on-success="order-status"
-            ></render-template>
+            <use-template load="loadOrders" on-success="order-status"></use-template>
           </ul>
           <p class="muted">Keeps what it loaded first.</p>
         </article>
@@ -138,12 +131,12 @@
         <code>data-action</code> (it loads the next page); <em>Previous</em> passes a page number
         from a listener. <code>data-if</code> hides each button at the ends.
       </p>
-      <render-template
-        subscribe-to-action="loadCatalogPage"
+      <use-template
+        subscribe="loadCatalogPage"
         on-pending="state-pending"
         on-success="catalog-page"
         on-error="state-error"
-      ></render-template>
+      ></use-template>
     </section>
 
     <section id="feed">
@@ -154,9 +147,9 @@
         <code>on-pending</code>: the first placeholder is the element's own content, and the list
         stays on screen while more items load.
       </p>
-      <render-template subscribe-to-action="loadCatalogFeed" on-success="catalog-feed">
+      <use-template subscribe="loadCatalogFeed" on-success="catalog-feed">
         <p class="muted">Loading the feed…</p>
-      </render-template>
+      </use-template>
     </section>
 
     <section id="direct">
@@ -166,9 +159,9 @@
         own markup fills its <code>body</code> slot. Assigning <code>.data</code> fills the
         bindings.
       </p>
-      <render-template id="note" template="note-card">
+      <use-template id="note" template="note-card">
         <p slot="body">This paragraph is the page author's markup, placed through a slot.</p>
-      </render-template>
+      </use-template>
       <button id="fill-note">Fill from .data</button>
     </section>
 

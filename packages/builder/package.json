@@ -1,0 +1,32 @@
+{
+  "name": "@buildadiv/builder",
+  "version": "0.1.0",
+  "description": "Builds static sites from plain HTML pages and component folders, with one minified CSS/JS bundle per page.",
+  "bin": {
+    "buildadiv": "./lib/cli.mjs"
+  },
+  "files": [
+    "lib"
+  ],
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.mts",
+      "default": "./lib/index.mjs"
+    },
+    "./node": {
+      "types": "./lib/node.d.mts",
+      "default": "./lib/node.mjs"
+    }
+  },
+  "scripts": {
+    "build:lib": "vp pack"
+  },
+  "dependencies": {
+    "jsdom": "^30.1.2",
+    "vite-plus": "^1.1.0"
+  },
+  "devDependencies": {
+    "@buildadiv/shared": "0.1.0"
+  }
+}

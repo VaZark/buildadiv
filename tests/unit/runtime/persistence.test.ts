@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { provider } from '../../../packages/runtime/action.js';
+import { query } from '../../../packages/runtime/action.js';
 import { subscribe } from '../../../packages/runtime/data/queries.js';
 import { cache } from '../../../packages/runtime/data/entries.js';
 import { settings } from '../../../packages/runtime/configuration/settings.js';
@@ -26,7 +26,7 @@ test('unused retention, no-store, persistence maxAge and buster', async () => {
     calls++;
     return new Response('[{"id":1}]');
   };
-  const load = named(provider({ url: '/' }));
+  const load = named(query({ url: '/' }));
   await load();
   cache.clear();
   await load();
@@ -39,7 +39,7 @@ test('unused retention, no-store, persistence maxAge and buster', async () => {
   settings.maxAge = -1;
   await load();
   assert.equal(calls, 3);
-  const expiring = named(provider({ url: '/', keepUnusedFor: 0.001 }));
+  const expiring = named(query({ url: '/', keepUnusedFor: 0.001 }));
   const off = subscribe(expiring, () => {});
   await expiring();
   off();
@@ -49,7 +49,7 @@ test('unused retention, no-store, persistence maxAge and buster', async () => {
     calls++;
     return new Response('[]', { headers: { 'cache-control': 'no-store' } });
   };
-  const noStore = named(provider({ url: '/' }));
+  const noStore = named(query({ url: '/' }));
   await noStore();
   await tick();
   assert.ok(!data.has(`${noStore.actionName}:`));

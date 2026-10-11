@@ -2,7 +2,7 @@ import type { Action, RegisteredAction } from '../contracts/actions.js';
 import type { ActionResult } from '../contracts/results.js';
 import type { CacheEntry } from '../contracts/queries.js';
 
-import { templateReferenceAttributes } from '../../shared/references.js';
+import { templateReferenceAttributes } from '@buildadiv/shared/references.js';
 import { settings } from '../configuration/settings.js';
 import { TemplateRenderer } from './bindings.js';
 import { subscribe, refreshPage } from '../data/queries.js';
@@ -10,7 +10,7 @@ import { stateOf, resultFor } from '../actions/results.js';
 import { emit } from '../events.js';
 
 /** A light-DOM host connects action states to templates without owning requests. */
-export class RenderTemplate extends HTMLElement {
+export class UseTemplate extends HTMLElement {
   private slotChildren?: Node[];
   private input: unknown;
   private hasData = false;
@@ -20,11 +20,7 @@ export class RenderTemplate extends HTMLElement {
   private generation = 0;
   private action?: RegisteredAction;
   private renderer?: TemplateRenderer;
-  static observedAttributes = [
-    ...templateReferenceAttributes,
-    'load-from-action',
-    'subscribe-to-action',
-  ];
+  static observedAttributes = [...templateReferenceAttributes, 'load', 'subscribe'];
   /** Capture author slot markup once; defer startup until page modules can register actions. */
   connectedCallback() {
     if (!this.slotChildren)
@@ -62,7 +58,7 @@ export class RenderTemplate extends HTMLElement {
   /** Wait for registered actions and keep load-once regions outside the tag registry. */
   start() {
     if (this.started || !this.isConnected) return;
-    const name = this.getAttribute('subscribe-to-action') || this.getAttribute('load-from-action');
+    const name = this.getAttribute('subscribe') || this.getAttribute('load');
     const fn = name ? settings.actions.get(name) : undefined;
     // configure() wakes waiting elements once module-local actions are registered.
     if (name && !fn) return;
@@ -80,7 +76,7 @@ export class RenderTemplate extends HTMLElement {
       const template = this.getAttribute(`on-${stateOf(result)}`);
       if (template) this.render(template, result, false, entry);
     };
-    if (this.hasAttribute('subscribe-to-action') && fn.options)
+    if (this.hasAttribute('subscribe') && fn.options)
       this.unsubscribe = subscribe(fn as Action, receive);
     else {
       receive(resultFor({ options: fn.options || {} }, 'pending', null));
@@ -154,6 +150,6 @@ export class RenderTemplate extends HTMLElement {
 // Typed selectors expose the same data property and start method as the native element.
 declare global {
   interface HTMLElementTagNameMap {
-    'render-template': RenderTemplate;
+    'use-template': UseTemplate;
   }
 }

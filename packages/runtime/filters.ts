@@ -7,4 +7,4 @@ export {
   upper,
   lower,
   truncate,
-} from '../shared/filters.js';
+} from '@buildadiv/shared/filters.js';

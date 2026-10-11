@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { provider, mutation } from '../../../packages/runtime/action.js';
+import { query, mutation } from '../../../packages/runtime/action.js';
 import { subscribe } from '../../../packages/runtime/data/queries.js';
 import { getEntry } from '../../../packages/runtime/data/entries.js';
 import { named, reset } from '../../support/runtime.js';
@@ -15,7 +15,7 @@ test('pagination merges, selects explicit pages, and refreshes only current and 
     );
   };
   const load = named(
-    provider({
+    query({
       url: (page) => '/' + page,
       provides: { tag: 'Page', key: 'id' },
       paginated: {
@@ -50,7 +50,7 @@ test('selecting a page while another page loads fetches both in order', async ()
     return new Response(JSON.stringify([{ id: Number(String(url).slice(1)) }]));
   };
   const load = named(
-    provider<number, { id: number }[]>({
+    query<number, { id: number }[]>({
       url: (page) => '/' + page,
       paginated: { mode: 'pages', firstPage: 1, nextPage: (_response, page) => page + 1 },
     }),

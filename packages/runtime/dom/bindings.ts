@@ -9,17 +9,17 @@ interface RenderRecord {
   fragment?: DocumentFragment;
 }
 
-import { resolvePath, truthy } from '../../shared/path.js';
-import { evaluate } from '../../shared/pipeline.js';
-import { fillSlots } from '../../shared/slots.js';
+import { resolvePath, truthy } from '@buildadiv/shared/path.js';
+import { evaluate } from '@buildadiv/shared/pipeline.js';
+import { fillSlots } from '@buildadiv/shared/slots.js';
 import { settings } from '../configuration/settings.js';
 import { sameKey } from '../data/keys.js';
 
 const initialDisplay = new WeakMap<HTMLElement, string>();
 const nestedLists = new WeakMap<HTMLTemplateElement, TemplateRenderer>();
 const owners = new WeakMap<Element, TemplateRenderer>();
-import { safeAttribute } from '../../shared/attributes.js';
-export { safeAttribute } from '../../shared/attributes.js';
+import { safeAttribute } from '@buildadiv/shared/attributes.js';
+export { safeAttribute } from '@buildadiv/shared/attributes.js';
 
 /** Avoid redundant DOM writes, removing absent values rather than showing previews. */
 function setAttribute(element: Element, name: string, value: string | null): void {
@@ -80,7 +80,7 @@ function bindTree(
       continue;
     }
     if (!preview) bindElement(element as HTMLElement, data);
-    if (element.localName !== 'render-template') bindTree(element, data, preview, owner);
+    if (element.localName !== 'use-template') bindTree(element, data, preview, owner);
   }
 }
 

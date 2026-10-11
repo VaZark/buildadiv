@@ -30,7 +30,7 @@ function delegate(type: string): void {
             (event as SubmitEvent).submitter as HTMLElement | null,
           ),
         );
-      // A clicked provider is an explicit refresh (or "load more"), not a cached read.
+      // A clicked query is an explicit refresh (or "load more"), not a cached read.
       else if (readsQueries(fn.options)) void reload(fn as Action);
       else void fn();
     },

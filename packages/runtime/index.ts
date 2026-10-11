@@ -1,34 +1,34 @@
 import type { Configuration } from './contracts/configuration.js';
 export type {
   Action,
-  ProviderAction,
+  QueryAction,
   MutationAction,
   GenericAction,
   ActionOptions,
   ActionResult,
   ActionContext,
-  ProviderOptions,
+  QueryOptions,
   MutationOptions,
   Configuration,
   Store,
   RequestOptions,
-  QueryOptions,
+  ReadOptions,
   WriteOptions,
-  GetProviderOptions,
-  QueryProviderOptions,
+  GetQueryOptions,
+  HttpQueryOptions,
   NormalizedActionOptions,
-  NormalizedProviderOptions,
+  NormalizedQueryOptions,
   NormalizedMutationOptions,
-  ProviderMethod,
+  ReadMethod,
   MutationMethod,
   Method,
 } from './types.js';
 
 export { HttpMethod } from './types.js';
-/** The `<render-template>` element class, for typing `.data` assignments and queries. */
-export type { RenderTemplate } from './dom/element.js';
+/** The `<use-template>` element class, for typing `.data` assignments and queries. */
+export type { UseTemplate } from './dom/element.js';
 import { settings, registerActions } from './configuration/settings.js';
-import { RenderTemplate } from './dom/element.js';
+import { UseTemplate } from './dom/element.js';
 
 import { installTriggers, scanEvents } from './dom/triggers.js';
 
@@ -40,8 +40,7 @@ export function configure(options: Configuration = {}): void {
   if (options.maxAge !== undefined) settings.maxAge = options.maxAge;
   if (options.buster !== undefined) settings.buster = options.buster;
   scanEvents();
-  for (const element of document.querySelectorAll('render-template')) element.start();
+  for (const element of document.querySelectorAll('use-template')) element.start();
 }
-if (!customElements.get('render-template'))
-  customElements.define('render-template', RenderTemplate);
+if (!customElements.get('use-template')) customElements.define('use-template', UseTemplate);
 installTriggers();

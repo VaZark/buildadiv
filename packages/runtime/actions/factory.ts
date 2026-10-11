@@ -1,19 +1,19 @@
 import type {
   Action,
   ActionOptions,
-  ProviderOptions,
+  QueryOptions,
   MutationOptions,
-  ProviderAction,
+  QueryAction,
   MutationAction,
   GenericAction,
-  NormalizedProviderOptions,
+  NormalizedQueryOptions,
   NormalizedMutationOptions,
   NormalizedGenericOptions,
   NormalizedActionOptions,
 } from '../contracts/actions.js';
 import type { ActionResult } from '../contracts/results.js';
 import { HttpMethod } from '../contracts/http.js';
-import { isProviderMethod, isMutationMethod } from './methods.js';
+import { isReadMethod, isMutationMethod } from './methods.js';
 import { executeRequest } from './request.js';
 import { getEntry } from '../data/entries.js';
 import { load, refresh } from '../data/queries.js';
@@ -52,12 +52,12 @@ function createAction<Args, Data, Options extends NormalizedActionOptions<Args, 
   const normalized = options as unknown as NormalizedActionOptions;
   const execute = async (args?: unknown): Promise<ActionResult> => {
     switch (normalized.kind) {
-      case 'provider':
+      case 'query':
         return load(getEntry(fn, args), args);
       case 'mutation':
         return executeRequest(fn, args, args, { refetch: refresh });
       case 'action':
-        return isProviderMethod(normalized.method)
+        return isReadMethod(normalized.method)
           ? load(getEntry(fn, args), args)
           : executeRequest(fn, args, args, { refetch: refresh });
     }
@@ -78,32 +78,32 @@ export function action<Args = unknown, Data = unknown>(
 }
 
 /** GET/QUERY interfaces forbid mutation effects and GET bodies before code can run. */
-export function provider<Args = unknown, Data = unknown>(
-  options: ProviderOptions<Args, Data>,
-): ProviderAction<Args, Data> {
+export function query<Args = unknown, Data = unknown>(
+  options: QueryOptions<Args, Data>,
+): QueryAction<Args, Data> {
   const method = (options.method || HttpMethod.GET).toUpperCase();
   // These guards serve untyped JavaScript imports; never fields enforce the role
   // for TypeScript callers, including options passed through intermediate variables.
   if (
-    !isProviderMethod(method) ||
+    !isReadMethod(method) ||
     options.invalidates !== undefined ||
     options.reconciles !== undefined
   ) {
-    throw new TypeError('Providers only read; invalidation and reconciliation belong to mutations');
+    throw new TypeError('Queries only read; invalidation and reconciliation belong to mutations');
   }
   if (method === HttpMethod.GET) {
-    if (options.send) throw new TypeError('GET providers cannot send a body');
-    return createAction<Args, Data, NormalizedProviderOptions<Args, Data>>({
+    if (options.send) throw new TypeError('GET queries cannot send a body');
+    return createAction<Args, Data, NormalizedQueryOptions<Args, Data>>({
       ...options,
       send: undefined,
       method,
-      kind: 'provider',
+      kind: 'query',
     });
   }
-  return createAction<Args, Data, NormalizedProviderOptions<Args, Data>>({
+  return createAction<Args, Data, NormalizedQueryOptions<Args, Data>>({
     ...options,
     method,
-    kind: 'provider',
+    kind: 'query',
   });
 }
 

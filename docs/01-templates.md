@@ -17,8 +17,8 @@ components/product-card/
 ```
 
 - **Convention, not declaration.** The HTML file holds only the template. Whichever of `<name>.css` and `<name>.js` exists beside it is picked up when the component is used; nothing links them by hand.
-- **Wherever the component is used, its files come with it.** In a built site, the build detects each component a page uses (as a tag or through a `<render-template>`) and puts its CSS and JS into that page's single minified bundle ([04](04-builder-and-editor.md#component-files)).
-- **Components are a builder concept.** The runtime's `<render-template>` only renders templates already in the page and loads nothing; a page used without the builder writes its templates inline and styles them with any global CSS ([02](02-rendering-and-actions.md#render-template)).
+- **Wherever the component is used, its files come with it.** In a built site, the build detects each component a page uses (as a tag or through a `<use-template>`) and puts its CSS and JS into that page's single minified bundle ([04](04-builder-and-editor.md#component-files)).
+- **Components are a builder concept.** The runtime's `<use-template>` only renders templates already in the page and loads nothing; a page used without the builder writes its templates inline and styles them with any global CSS ([02](02-rendering-and-actions.md#use-template)).
 
 ## Template
 
@@ -47,14 +47,14 @@ Four tools, two jobs. **Filling** a hole inside a component, and **placing** a c
 |---|---|---|---|
 | **`data-bind`** / `data-bind-<attr>` | Fill | A **value from data**, inserted as text or an attribute | a product's name, price, image URL |
 | **`<slot>`** | Fill | **Markup written by whoever uses the component**: elements, other components, a free-form block | a modal's body, a page layout's content, a card's footer buttons |
-| **`<render-template>`** | Place | A component **in the browser**, with or without data | a live product list, a modal opened at runtime |
+| **`<use-template>`** | Place | A template from the page **in the browser**, with or without data | a live product list, a modal opened at runtime |
 | **Component tag** (`<modal-dialog>`) | Place | A component **at build time** (part 2) | the site header, the page layout |
 
 **Rules of thumb:**
 
 - Comes from data → `data-bind`.
 - Written by the person using the component → slot.
-- Needs to render in the browser, or needs an action's data → `<render-template>`.
+- Needs to render in the browser, or needs an action's data → `<use-template>`.
 - Static, known at build time → component tag ([04](04-builder-and-editor.md#component-tags)).
 
 A component can use both bindings and slots. A product card might bind its name and price from data and offer a slot for the buttons each page wants underneath.
@@ -65,7 +65,7 @@ Bindings fill a hole with a **value from data**. Binding is split by role:
 
 | Syntax | Filled | By | Where |
 |---|---|---|---|
-| `data-bind`, `data-bind-<attr>` | At runtime | `<render-template>` | Inside `<template>` |
+| `data-bind`, `data-bind-<attr>` | At runtime | `<use-template>` | Inside `<template>` |
 | `{{ value }}` | At build time | Part 2's build | Pages and component tags, **outside** `<template>` ([04](04-builder-and-editor.md#build-time-values)) |
 
 The build skips everything inside `<template>`, so the two never meet. Part 1 understands only `data-*` attributes, which is why it needs no build.
@@ -111,7 +111,7 @@ Slots let **whoever uses a component** pass in their own markup. Use them for wr
 </modal-dialog>
 ```
 
-**3. Result** after the build (or `<render-template>`) puts them together:
+**3. Result** after the build (or `<use-template>`) puts them together:
 
 ```html
 <div class="modal">
@@ -125,8 +125,8 @@ Slots let **whoever uses a component** pass in their own markup. Use them for wr
 
 - `<slot name="header">` is the **socket**, in the component. `slot="header"` is the **plug**, on the page.
 - Text inside a `<slot>` is preview content, shown only when the user doesn't fill that hole.
-- Slot content is the user's own markup, so it may contain anything: elements, bindings, component tags, `<render-template>`.
-- There's **no shadow DOM**, so native slotting doesn't apply. The build (component tags) and `<render-template>` (runtime) fill slots themselves, using the same rules from the `shared` package ([04](04-builder-and-editor.md#packages)).
+- Slot content is the user's own markup, so it may contain anything: elements, bindings, component tags, `<use-template>`.
+- There's **no shadow DOM**, so native slotting doesn't apply. The build (component tags) and `<use-template>` (runtime) fill slots themselves, using the same rules from the `shared` package ([04](04-builder-and-editor.md#packages)).
 
 ## Filters
 

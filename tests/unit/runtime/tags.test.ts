@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { provider, mutation } from '../../../packages/runtime/action.js';
+import { query, mutation } from '../../../packages/runtime/action.js';
 import { subscribe } from '../../../packages/runtime/data/queries.js';
 import { cache, getEntry } from '../../../packages/runtime/data/entries.js';
 import { named, reset, tick } from '../../support/runtime.js';
@@ -15,7 +15,7 @@ test('reconcile upserts the key owner, sorts, recomputes context, and never fetc
     );
   };
   const load = named(
-    provider<unknown, { id: number; name: string }[]>({
+    query<unknown, { id: number; name: string }[]>({
       url: '/list',
       provides: { tag: 'Item', key: 'id' },
       sort: (a, b) => a.name.localeCompare(b.name),
@@ -45,9 +45,9 @@ test('item invalidation refetches matching mounted queries and drops unmounted d
       url === '/change' ? '{"id":1}' : JSON.stringify([{ id: url === '/a' ? 1 : 2 }]),
     );
   };
-  const a = named(provider({ url: '/a', provides: { tag: 'Item', key: 'id' } }));
-  const b = named(provider({ url: '/b', provides: { tag: 'Item', key: 'id' } }));
-  const c = named(provider({ url: '/c', provides: { tag: 'Item', key: 'id' } }));
+  const a = named(query({ url: '/a', provides: { tag: 'Item', key: 'id' } }));
+  const b = named(query({ url: '/b', provides: { tag: 'Item', key: 'id' } }));
+  const c = named(query({ url: '/c', provides: { tag: 'Item', key: 'id' } }));
   const offA = subscribe(a, () => {}),
     offB = subscribe(b, () => {});
   await Promise.all([a(), b(), c()]);
@@ -68,7 +68,7 @@ test('failed reconcile invalidates; background failures keep data unless throw i
     new Response(url === '/change' ? '{}' : fail ? 'failed' : '[{"id":1}]', {
       status: fail && url !== '/change' ? 500 : 200,
     });
-  const load = named(provider({ url: '/list', provides: { tag: 'Item', key: 'id' } }));
+  const load = named(query({ url: '/list', provides: { tag: 'Item', key: 'id' } }));
   const off = subscribe(load, () => {});
   await load();
   fail = true;
@@ -90,7 +90,7 @@ test('invalidation during an in-flight query schedules a fresh request', async (
     if (calls === 1) await new Promise<void>((resolve) => (finish = resolve));
     return new Response('[{"id":1}]');
   };
-  const load = named(provider({ url: '/list', provides: { tag: 'Item', key: 'id' } }));
+  const load = named(query({ url: '/list', provides: { tag: 'Item', key: 'id' } }));
   const off = subscribe(load, () => {});
   await tick();
   const changed = named(mutation({ url: '/change', invalidates: 'Item' }))();
@@ -112,7 +112,7 @@ test('item ids read from data-key strings match numeric cached ids', async () =>
           status: url === '/rename' ? 200 : 204,
         });
   };
-  const load = named(provider({ url: '/list', provides: { tag: 'Item', key: 'id' } }));
+  const load = named(query({ url: '/list', provides: { tag: 'Item', key: 'id' } }));
   const off = subscribe(load, () => {});
   await load();
   const rename = named(mutation({ url: '/rename', reconciles: { tag: 'Item', key: 'id' } }));

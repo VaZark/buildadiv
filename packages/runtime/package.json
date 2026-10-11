@@ -1,0 +1,22 @@
+{
+  "name": "@buildadiv/query-template",
+  "version": "0.1.0",
+  "description": "Client-side templates driven by data: <use-template>, query() and mutation() with tags and caching. No build step.",
+  "files": [
+    "lib"
+  ],
+  "type": "module",
+  "sideEffects": true,
+  "exports": {
+    ".": {
+      "types": "./lib/query-template.min.d.ts",
+      "default": "./lib/query-template.min.js"
+    }
+  },
+  "scripts": {
+    "build:lib": "vp pack"
+  },
+  "devDependencies": {
+    "@buildadiv/shared": "0.1.0"
+  }
+}

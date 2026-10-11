@@ -20,7 +20,7 @@ export function fillSlots(
   }
   for (const slot of root.querySelectorAll('slot')) {
     // A nested runtime host owns its sockets; outer composition leaves it intact.
-    if (slot.closest('render-template')) continue;
+    if (slot.closest('use-template')) continue;
     const assigned = groups.get(slot.getAttribute('name') || '');
     const nodes = assigned?.length ? assigned.map(clone) : Array.from(slot.childNodes);
     if (assigned?.length) inserted.push(...nodes);

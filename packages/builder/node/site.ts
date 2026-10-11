@@ -1,7 +1,7 @@
 import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join, relative, sep } from 'node:path';
 import type { BundleName } from '../contracts.js';
-import type { FilterRegistry } from '../../shared/types.js';
+import type { FilterRegistry } from '@buildadiv/shared/types.js';
 import { buildPage } from '../build.js';
 import { bundleName } from '../bundling.js';
 import { parseHtmlNode } from './dom.js';

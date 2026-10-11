@@ -5,7 +5,7 @@ function markOwned(root: ParentNode, name: string): void {
   for (const element of Array.from(root.children)) {
     element.setAttribute('data-c', name);
     // A nested runtime host renders its own templates; only the host itself is owned.
-    if (element.localName === 'render-template') continue;
+    if (element.localName === 'use-template') continue;
     if (element.localName === 'template') markOwned((element as HTMLTemplateElement).content, name);
     else markOwned(element, name);
   }

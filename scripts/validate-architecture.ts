@@ -22,13 +22,43 @@ const nodeFolder = (path: string): boolean => relative(packageRoot, path).split(
 const nodeImport = (target: string): boolean =>
   target.startsWith('node:') || target === 'vite-plus' || target === 'jsdom';
 
+/** Workspace package names by folder; package code reaches another package only by name. */
+const packageNames: Record<string, string> = {
+  shared: '@buildadiv/shared',
+  runtime: '@buildadiv/query-template',
+  builder: '@buildadiv/builder',
+  editor: '@buildadiv/editor',
+};
+const folderOf = new Map(Object.entries(packageNames).map(([folder, name]) => [name, folder]));
+/** Generated output and per-package tool configs are not package source. */
+const ignoredDirectories = new Set(['dist', 'lib', 'node_modules']);
+
+/** The workspace packages a package declares in its package.json. */
+async function declaredPackages(folder: string): Promise<Set<string>> {
+  const manifest: unknown = JSON.parse(
+    await readFile(join(packageRoot, folder, 'package.json'), 'utf8'),
+  );
+  const declared = new Set<string>();
+  if (manifest && typeof manifest === 'object')
+    for (const field of ['dependencies', 'devDependencies', 'peerDependencies'])
+      for (const name of Object.keys((manifest as Record<string, object>)[field] ?? {}))
+        declared.add(name);
+  return declared;
+}
+
 /** Traverse only authored TypeScript so generated output cannot hide an invalid dependency. */
 async function sourceFiles(directory: string): Promise<string[]> {
   const files: string[] = [];
   for (const entry of await readdir(directory, { withFileTypes: true })) {
     const path = join(directory, entry.name);
-    if (entry.isDirectory()) files.push(...(await sourceFiles(path)));
-    else if (entry.name.endsWith('.ts')) files.push(path);
+    if (entry.isDirectory()) {
+      if (!ignoredDirectories.has(entry.name)) files.push(...(await sourceFiles(path)));
+    } else if (
+      entry.name.endsWith('.ts') &&
+      !entry.name.endsWith('.d.ts') &&
+      entry.name !== 'vite.config.ts'
+    )
+      files.push(path);
   }
   return files;
 }
@@ -81,11 +111,35 @@ function dependencies(source: ts.SourceFile): Dependency[] {
   return result;
 }
 
+/**
+ * Resolve one import to a source file. Inside a package, imports are relative
+ * native `.js` paths; another workspace package is reached only through its
+ * name (`@buildadiv/shared/path.js`), never through `../`.
+ */
+function resolveImport(path: string, owner: string, target: string): string {
+  const bare = /^(@buildadiv\/[\w-]+)\/(.+\.js)$/.exec(target);
+  if (bare) {
+    const folder = folderOf.get(bare[1]);
+    if (!folder)
+      throw new Error(`${relative(packageRoot, path)} imports an unknown package: ${target}`);
+    return join(packageRoot, folder, bare[2].replace(/\.js$/, '.ts'));
+  }
+  if (!target.startsWith('.') || !target.endsWith('.js'))
+    throw new Error(`${relative(packageRoot, path)} must use a native .js import: ${target}`);
+  const resolved = resolve(dirname(path), target.replace(/\.js$/, '.ts'));
+  if (relative(packageRoot, resolved).split('/')[0] !== owner)
+    throw new Error(
+      `${relative(packageRoot, path)} reaches into another package by path; import it by name: ${target}`,
+    );
+  return resolved;
+}
+
 /** Enforce documented package isolation and native .js specifiers at every source dependency. */
 async function dependencyGraph(): Promise<Map<string, string[]>> {
   const files = await sourceFiles(packageRoot);
   const known = new Set(files);
   const graph = new Map<string, string[]>();
+  const declared = new Map<string, Set<string>>();
   for (const path of files) {
     const text = await readFile(path, 'utf8');
     if (/\/\/\s*@ts-(?:ignore|nocheck)\b/.test(text))
@@ -95,17 +149,19 @@ async function dependencyGraph(): Promise<Map<string, string[]>> {
     const edges: string[] = [];
     for (const dependency of dependencies(source)) {
       if (nodeFolder(path) && nodeImport(dependency.target)) continue;
-      if (!dependency.target.startsWith('.') || !dependency.target.endsWith('.js')) {
-        throw new Error(
-          `${relative(packageRoot, path)} must use a relative native .js import: ${dependency.target}`,
-        );
-      }
-      const target = resolve(dirname(path), dependency.target.replace(/\.js$/, '.ts'));
+      const target = resolveImport(path, owner, dependency.target);
       const targetOwner = relative(packageRoot, target).split('/')[0];
       if (!known.has(target) || !allowedPackages[owner]?.has(targetOwner)) {
         throw new Error(
           `Invalid package dependency: ${relative(packageRoot, path)} → ${dependency.target}`,
         );
+      }
+      if (targetOwner !== owner) {
+        if (!declared.has(owner)) declared.set(owner, await declaredPackages(owner));
+        if (!declared.get(owner)!.has(packageNames[targetOwner]))
+          throw new Error(
+            `${packageNames[owner]} imports ${packageNames[targetOwner]} without declaring it in package.json`,
+          );
       }
       if (nodeFolder(target) && !nodeFolder(path)) {
         throw new Error(

@@ -47,7 +47,7 @@ test('the runtime gallery demonstrates every state and pattern it describes', as
   );
   expect(await ordersRequests(page)).toBe(before);
 
-  // 3 · subscribe-to-action follows changes; load-from-action keeps its first result.
+  // 3 · subscribe follows changes; load keeps its first result.
   // Compare rendered text: each row keeps both conditional branches, one hidden.
   const shown = (selector: string) => () => page.locator(selector).allInnerTexts();
   const subscribed = shown('#subscribed li');
@@ -96,7 +96,7 @@ test('the runtime gallery demonstrates every state and pattern it describes', as
   await expect(note).toContainText('By You');
 
   // The page runs on the standalone runtime file alone.
-  expect(requested).toContain('/lib/buildadiv-runtime.min.js');
+  expect(requested).toContain('/lib/query-template.min.js');
   expect(requested.some((path) => path.startsWith('/packages/'))).toBe(false);
   expect(errors).toEqual([]);
 });

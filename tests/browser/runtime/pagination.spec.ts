@@ -8,9 +8,9 @@ test('infinite pagination loads more and marks page rows; pages mode replaces', 
   const errors = await setup(page, request);
   await page.evaluate(async () => {
     const { configure } = await import('/packages/runtime/index.js');
-    const { provider } = await import('/packages/runtime/action.js');
+    const { query } = await import('/packages/runtime/action.js');
     const make = (mode: 'pages' | 'infinite') =>
-      provider<number>({
+      query<number>({
         url: (page) => '/api/pages?page=' + page,
         paginated: {
           mode,
@@ -22,7 +22,7 @@ test('infinite pagination loads more and marks page rows; pages mode replaces', 
   });
   await mount(
     page,
-    '<render-template id="infinite" subscribe-to-action="infiniteTest" on-success="product-rows"></render-template><button data-action="infiniteTest">More infinite</button><render-template id="pages" subscribe-to-action="pagesTest" on-success="product-rows"></render-template><button data-action="pagesTest">Next page</button>',
+    '<use-template id="infinite" subscribe="infiniteTest" on-success="product-rows"></use-template><button data-action="infiniteTest">More infinite</button><use-template id="pages" subscribe="pagesTest" on-success="product-rows"></use-template><button data-action="pagesTest">Next page</button>',
   );
   await expect(page.locator('#infinite li')).toHaveCount(1);
   await expect(page.locator('#pages li')).toHaveCount(1);
@@ -41,8 +41,8 @@ test('infinite viewport invalidation refreshes nearby older pages when scrolling
   const errors = await setup(page, request);
   await page.evaluate(async () => {
     const { configure } = await import('/packages/runtime/index.js');
-    const { provider, mutation } = await import('/packages/runtime/action.js');
-    const viewportTest = provider<number>({
+    const { query, mutation } = await import('/packages/runtime/action.js');
+    const viewportTest = query<number>({
       url: (page) => '/api/pages?page=' + page,
       provides: { tag: 'Viewport', key: 'id' },
       paginated: {
@@ -58,7 +58,7 @@ test('infinite viewport invalidation refreshes nearby older pages when scrolling
   });
   await mount(
     page,
-    '<template data-component="tall-rows" data-accepts="array" data-item="row" data-key="id"><article style="height:900px"><h2 data-bind="row.name">Page name</h2></article></template><render-template id="viewport" subscribe-to-action="viewportTest" on-success="tall-rows"></render-template>',
+    '<template data-component="tall-rows" data-accepts="array" data-item="row" data-key="id"><article style="height:900px"><h2 data-bind="row.name">Page name</h2></article></template><use-template id="viewport" subscribe="viewportTest" on-success="tall-rows"></use-template>',
   );
   await expect(page.locator('#viewport article')).toHaveCount(1);
   await page.evaluate(async () => {

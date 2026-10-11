@@ -11,10 +11,7 @@
         <p>Featured this week.</p>
       </product-card>
       <ul>
-        <render-template
-          subscribe-to-action="loadProducts"
-          on-success="product-list"
-        ></render-template>
+        <use-template subscribe="loadProducts" on-success="product-list"></use-template>
       </ul>
     </site-layout>
   </body>

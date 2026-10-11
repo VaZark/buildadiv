@@ -1,8 +1,8 @@
 # 02 · Rendering and actions (part 1)
 
-How data gets from an API onto the page: actions fetch it, `<render-template>` places it, templates render it.
+How data gets from an API onto the page: actions fetch it, `<use-template>` places it, templates render it.
 
-**Contents:** [Who does what](#who-does-what) · [`<render-template>`](#render-template) · [Actions](#actions) · [Invoking actions](#invoking-actions) · [Context](#context) · [Pagination](#pagination) · [Request and response formats](#request-and-response-formats) · [Events](#events)
+**Contents:** [Who does what](#who-does-what) · [`<use-template>`](#use-template) · [Actions](#actions) · [Invoking actions](#invoking-actions) · [Context](#context) · [Pagination](#pagination) · [Request and response formats](#request-and-response-formats) · [Events](#events)
 
 ---
 
@@ -11,45 +11,45 @@ How data gets from an API onto the page: actions fetch it, `<render-template>` p
 | Piece | Knows | Doesn't know |
 |---|---|---|
 | **Action** (`api/`) | The request, the method, how to decode it, which tags it provides or touches | Templates, or where anything appears |
-| **`<render-template>`** | Where a component renders, and which template to use for each state | How the data is fetched |
+| **`<use-template>`** | Where a template renders, and which template to use for each state | How the data is fetched |
 | **Template** | The shape of the data it binds, and the slots it offers | Where data comes from |
 | **`data-action` element** | Which function to call | Anything about data |
 
-For choosing between bindings, slots, `<render-template>` and component tags, see [01 · When to use what](01-templates.md#when-to-use-what). For working examples of every pattern below, run `npm run serve-examples` and open the runtime gallery, `examples/runtime/`.
+For choosing between bindings, slots, `<use-template>` and component tags, see [01 · When to use what](01-templates.md#when-to-use-what). For working examples of every pattern below, run `npm run serve-examples` and open the runtime gallery, `examples/runtime/`.
 
-## `<render-template>`
+## `<use-template>`
 
 The one runtime element for **placing** components in the browser, with or without data.
 
 ```html
 <!-- a component with no data: name it, fill its slots with children -->
-<render-template template="modal-dialog">
+<use-template template="modal-dialog">
   <h2 slot="header">Delete product?</h2>
   <p>This can't be undone.</p>
   <button data-action="deleteProduct">Delete</button>
-</render-template>
+</use-template>
 
 <!-- a component fed by an action: its bindings are filled from the data -->
-<render-template
-  subscribe-to-action="loadProducts"
+<use-template
+  subscribe="loadProducts"
   on-pending="product-skeleton"
   on-success="product-rows"
   on-no-content="no-products"
   on-error="error-message">
-</render-template>
+</use-template>
 ```
 
 | Attribute | Meaning |
 |---|---|
-| `template="name"` | Render this component directly, with no action. Children fill its slots |
-| `load-from-action="fn"` | **Load and forget.** Call the action once and render. No tag subscription, so invalidation and freshness never refresh it |
-| `subscribe-to-action="fn"` | **Stay up to date.** Subscribe to the action's tags; invalidation, reconciliation, freshness and pagination keep it current |
+| `template="name"` | Render this template directly, with no action. Children fill its slots |
+| `load="fn"` | **Load and forget.** Call the action once and render. No tag subscription, so invalidation and freshness never refresh it |
+| `subscribe="fn"` | **Stay up to date.** Subscribe to the action's tags; invalidation, reconciliation, freshness and pagination keep it current |
 | `on-pending`, `on-success`, `on-no-content`, `on-error` | The template to render in each state |
 
 - **Children always fill slots**, whether or not there's an action. Bindings are filled from the action's data.
 - **A state with no template does nothing.** There are no system defaults: the element keeps whatever it shows.
 - Any number of elements can share an action, each with its own templates (e.g. a full list in one place and a count badge in another), from a single fetch.
-- Only `subscribe-to-action` elements count as **mounted** for the tag registry and cache ([03](03-data-layer.md#tag-registry)).
+- Only `<use-template subscribe>` elements count as **mounted** for the tag registry and cache ([03](03-data-layer.md#tag-registry)).
 - It applies bindings, attribute bindings, filters, slot filling and `data-if` hiding to what it renders.
 - **It renders only templates already in the page.** It loads nothing and adds no styling hooks or scope attributes, so a standalone page can use any global CSS: a design system like Bootstrap, utility classes like Tailwind, or its own stylesheet. Components (template + CSS + JS, with scoped styles) are the builder's concept ([04](04-builder-and-editor.md#component-files)); in a built page, runtime-rendered component templates arrive with their scope already written in.
 - It's a plain custom element: no shadow DOM, no framework.
@@ -60,9 +60,9 @@ All fetching and mutation lives in `api/` as **plain, readable, named functions*
 
 ```js
 // api/products.js
-import { provider, mutation } from '../runtime/action.js';
+import { query, mutation } from '../runtime/action.js';
 
-export const loadProducts = provider({ url: '/api/products' });
+export const loadProducts = query({ url: '/api/products' });
 
 export const addToCart = mutation({ method: 'POST', url: '/api/cart' });
 ```
@@ -70,12 +70,12 @@ export const addToCart = mutation({ method: 'POST', url: '/api/cart' });
 | Helper | HTTP methods | For | Options |
 |---|---|---|---|
 | `action()` | any | The **baseline**, available to everyone | every option |
-| `provider()` | `GET` (default), `QUERY` | Reading | `provides`, `items`, `sort`, `paginated`, `refetchAfter`, `keepUnusedFor`, `persist`, `context`, `accepts`, `timeout`, `onRefetchFailure`, `onInvalidate`; `send` for `QUERY` bodies |
+| `query()` | `GET` (default), `QUERY` | Reading | `provides`, `items`, `sort`, `paginated`, `refetchAfter`, `keepUnusedFor`, `persist`, `context`, `accepts`, `timeout`, `onRefetchFailure`, `onInvalidate`; `send` for `QUERY` bodies |
 | `mutation()` | `POST` (default), `PUT`, `PATCH`, `DELETE`, … | Changing data | `invalidates`, `reconciles`, `send`, `context`, `accepts`, `timeout` |
 
-- `provider()` and `mutation()` are thin layers over `action()`. They reject options that don't fit the role: a provider can't invalidate, a mutation can't provide.
+- `query()` and `mutation()` are thin layers over `action()`. They reject options that don't fit the role: a query can't invalidate, a mutation can't provide.
 - All three return an ordinary async function. Hand-written functions with the same signature are equally valid.
-- `QUERY` (RFC 10008) is the HTTP method for safe, read-only requests that carry a body, such as a complex search. It reads, so it belongs with providers.
+- `QUERY` (RFC 10008) is the HTTP method for safe, read-only requests that carry a body, such as a complex search. It reads, so it belongs with queries.
 - Action names must be **unique** across the project, because events are named after them.
 - Generated actions must be readable code a developer would happily maintain by hand.
 
@@ -93,7 +93,7 @@ export const addToCart = mutation({ method: 'POST', url: '/api/cart' });
 - `data-action` names the function. That's all the element knows.
 - The event defaults to `click`, or `submit` on forms. `data-on="…"` overrides it (`load`, `change`, …).
 - Actions are plain functions, so `onclick="loadCart()"` or an HTMX hook works too.
-- A `data-action` on a provider is an explicit refresh: it refetches even when cached data is still fresh (a paginated provider loads its next page instead). Calling a provider from JS reads through the cache like any other caller.
+- A `data-action` on a query is an explicit refresh: it refetches even when cached data is still fresh (a paginated query loads its next page instead). Calling a query from JS reads through the cache like any other caller.
 
 **Arguments.** `data-action` never passes arguments (a form sends its fields as the body). When an action needs arguments, call it from a regular event handler:
 
@@ -128,7 +128,7 @@ Every template rendered from an action receives **one object**:
 **Extra fields** come from the action's optional `context` function, merged into `context`:
 
 ```js
-export const loadProducts = provider({
+export const loadProducts = query({
   url: '/api/products',
   context: (response, status, args) => ({
     hasMore: Boolean(response && response.page < response.pages),
@@ -154,7 +154,7 @@ export const loadProducts = provider({
 Two modes, because they invalidate differently. Modeled on RTK Query's infinite queries and TanStack's `useInfiniteQuery`.
 
 ```js
-export const loadProducts = provider({
+export const loadProducts = query({
   url: (page) => `/api/products?page=${page}`,
   paginated: {
     mode: 'infinite',                 // 'pages' | 'infinite'
@@ -166,7 +166,7 @@ export const loadProducts = provider({
 ```
 
 ```html
-<render-template subscribe-to-action="loadProducts" on-success="product-list"></render-template>
+<use-template subscribe="loadProducts" on-success="product-list"></use-template>
 
 <!-- inside components/product-list/product-list.html -->
 <button data-action="loadProducts" data-if="context.nextPage">Load more</button>
@@ -215,7 +215,7 @@ export const updateProfile = mutation({
 ```js
 import { decode } from './vendor/msgpack.js';
 
-export const loadReadings = provider({
+export const loadReadings = query({
   url: '/api/readings',
   accepts: async (res) => decode(new Uint8Array(await res.arrayBuffer())),
 });
@@ -223,11 +223,11 @@ export const loadReadings = provider({
 
 ## Events
 
-Actions and `<render-template>` elements emit `CustomEvent`s on `document`, so other code (notifications, analytics, closing a modal) can react without the action knowing.
+Actions and `<use-template>` elements emit `CustomEvent`s on `document`, so other code (notifications, analytics, closing a modal) can react without the action knowing.
 
 **Name:** `functionName:event`, e.g. `createProduct:success`. No HTTP method prefix; action names are unique.
 
-- State events reuse `<render-template>`'s names: `on-success` ↔ `success`.
+- State events reuse `<use-template>`'s names: `on-success` ↔ `success`.
 - Lifecycle events follow **htmx 4**'s `before:` / `after:` / `finally:` convention, so anyone who knows htmx reads them instantly.
 
 | Event | Fires when |
@@ -240,8 +240,8 @@ Actions and `<render-template>` elements emit `CustomEvent`s on `document`, so o
 | `error` | The request failed: network error or HTTP 400+ |
 | `timeout` | The action's `timeout` elapsed (it then ends in `error`) |
 | `finally:request` | The request lifecycle ended, whatever the outcome |
-| `before:render` | A `<render-template>` is about to update the DOM |
-| `after:render` | A `<render-template>` has updated the DOM |
+| `before:render` | A `<use-template>` is about to update the DOM |
+| `after:render` | A `<use-template>` has updated the DOM |
 | `invalidate:Type` | A tag was invalidated (item id in the detail when there is one) |
 
 ```js
@@ -276,44 +276,51 @@ listeners support elements inserted later. Form submission uses `FormData`, incl
 the submitter; a normal JavaScript call passes its argument as the request body.
 
 Pagination calls without arguments load the next page (the first on initial load).
-Explicit arguments select a page; selecting a different page while one loads waits for it, then loads the requested page. Infinite providers share a page sequence;
-nonpaginated providers cache distinct JSON-serializable arguments separately.
+Explicit arguments select a page; selecting a different page while one loads waits for it, then loads the requested page. Infinite queries share a page sequence;
+nonpaginated queries cache distinct JSON-serializable arguments separately.
 The exported default `mergeInfinite` concatenates arrays and `mergePages` replaces
 the response; use `merge` for envelopes. Infinite array rows carry page markers
-for viewport tracking. Envelope-based lists use the provider's `items` function
+for viewport tracking. Envelope-based lists use the query's `items` function
 for page markers. Styling is entirely the page's: the runtime adds no attributes or
 classes of its own beyond list keys and page markers, and never touches CSS.
 
-## Standalone runtime file
+## Installing
 
-`npm run build` also packs the whole public runtime (every export of `index`, `action`,
-`cache`, `formats`, `stores` and `filters`, with the shared code they use)
-into one minified ES module, `dist/lib/buildadiv-runtime.min.js`, with typings in
-`buildadiv-runtime.min.d.ts`. Copy that one file to any site:
+The runtime is published as **`@buildadiv/query-template`**: one minified ES module
+(`lib/query-template.min.js`, about 8.5 kB gzipped) with typings and no dependencies.
+
+```sh
+npm i @buildadiv/query-template
+```
+
+```js
+import { configure, query, currency } from '@buildadiv/query-template';
+```
+
+Without a bundler, copy that one file to any site (`npm run build` also puts it at
+`dist/lib/query-template.min.js`):
 
 ```html
 <script type="module">
-  import { configure, provider, currency } from '/lib/buildadiv-runtime.min.js';
-  const loadProducts = provider({ url: '/api/products' });
+  import { configure, query, currency } from '/lib/query-template.min.js';
+  const loadProducts = query({ url: '/api/products' });
   configure({ actions: { loadProducts }, filters: { currency } });
 </script>
 ```
 
-It needs nothing else from this repository. Importing it registers `<render-template>`.
-The per-module files under `dist/packages/runtime/` remain for projects that want only
-some modules.
+It needs nothing else. Importing it registers `<use-template>`.
 
 ## TypeScript action roles
 
-The helper contracts use separate `RequestOptions`, `QueryOptions` and
-`WriteOptions` interfaces. Provider/mutation interfaces explicitly forbid opposing
+The helper contracts use separate `RequestOptions`, `ReadOptions` and
+`WriteOptions` interfaces. Query/mutation interfaces explicitly forbid opposing
 role fields with `never`, including objects stored in intermediate variables.
-GET providers forbid `send`; QUERY providers allow an encoder. Public method
-types are derived from `HttpMethod`: providers accept GET/QUERY and mutations
+Queries using `GET` forbid `send`; those using the HTTP `QUERY` method allow an encoder. Public method
+types are derived from `HttpMethod`: queries accept GET/QUERY and mutations
 accept standard write methods (default POST). Use the extensible `action()` helper
 for other HTTP extension methods.
 
-`ProviderAction` and `MutationAction` retain their exact role in `.options.kind`;
-`NormalizedActionOptions` is the discriminated union used by execution. Providers
+`QueryAction` and `MutationAction` retain their exact role in `.options.kind`;
+`NormalizedActionOptions` is the discriminated union used by execution. Queries
 run the query/cache path, mutations run the write path, and baseline actions use
 their method. Native JavaScript callers still receive boundary validation.

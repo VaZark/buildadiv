@@ -22,7 +22,7 @@ export interface RequestOptions<Args = unknown, Data = unknown> {
 }
 
 /** Read actions alone own query caching, tag provision and pagination. */
-export interface QueryOptions<Args = unknown, Data = unknown> {
+export interface ReadOptions<Args = unknown, Data = unknown> {
   provides?: Tag;
   items?: (response: Data) => unknown[];
   sort?: (a: ItemOf<Data>, b: ItemOf<Data>) => number;
@@ -43,41 +43,41 @@ export interface WriteOptions<Args = unknown> {
 
 // Forbidden keys reject incompatible variables as well as fresh object literals.
 // Deriving them from interfaces keeps role contracts in sync when options change.
-type NoQueryOptions = { [Key in keyof QueryOptions]?: never };
+type NoReadOptions = { [Key in keyof ReadOptions]?: never };
 type NoWriteOptions = { [Key in keyof WriteOptions]?: never };
 
 /** The baseline helper remains extensible to custom HTTP methods and behavior. */
 export interface ActionOptions<Args = unknown, Data = unknown>
-  extends RequestOptions<Args, Data>, QueryOptions<Args, Data>, WriteOptions<Args> {
+  extends RequestOptions<Args, Data>, ReadOptions<Args, Data>, WriteOptions<Args> {
   method: string;
 }
 
 /** GET reads have no request body; the missing method defaults to GET. */
-export interface GetProviderOptions<Args = unknown, Data = unknown>
-  extends RequestOptions<Args, Data>, QueryOptions<Args, Data>, NoWriteOptions {
+export interface GetQueryOptions<Args = unknown, Data = unknown>
+  extends RequestOptions<Args, Data>, ReadOptions<Args, Data>, NoWriteOptions {
   method?: `${HttpMethod.GET}`;
   send?: never;
 }
 
 /** QUERY reads carry a body without acquiring mutation effects. */
-export interface QueryProviderOptions<Args = unknown, Data = unknown>
-  extends RequestOptions<Args, Data>, QueryOptions<Args, Data>, NoWriteOptions {
+export interface HttpQueryOptions<Args = unknown, Data = unknown>
+  extends RequestOptions<Args, Data>, ReadOptions<Args, Data>, NoWriteOptions {
   method: `${HttpMethod.QUERY}`;
 }
-export type ProviderOptions<Args = unknown, Data = unknown> =
-  | GetProviderOptions<Args, Data>
-  | QueryProviderOptions<Args, Data>;
+export type QueryOptions<Args = unknown, Data = unknown> =
+  | GetQueryOptions<Args, Data>
+  | HttpQueryOptions<Args, Data>;
 
 /** Mutation methods and forbidden query keys make read/write roles disjoint. */
 export interface MutationOptions<Args = unknown, Data = unknown>
-  extends RequestOptions<Args, Data>, WriteOptions<Args>, NoQueryOptions {
+  extends RequestOptions<Args, Data>, WriteOptions<Args>, NoReadOptions {
   method?: MutationMethod;
 }
 
-/** Providers retain GET/QUERY body rules even after defaults are applied. */
-export type NormalizedProviderOptions<Args = unknown, Data = unknown> =
-  | (GetProviderOptions<Args, Data> & { kind: 'provider'; method: `${HttpMethod.GET}` })
-  | (QueryProviderOptions<Args, Data> & { kind: 'provider' });
+/** Queries retain GET/QUERY body rules even after defaults are applied. */
+export type NormalizedQueryOptions<Args = unknown, Data = unknown> =
+  | (GetQueryOptions<Args, Data> & { kind: 'query'; method: `${HttpMethod.GET}` })
+  | (HttpQueryOptions<Args, Data> & { kind: 'query' });
 export type NormalizedMutationOptions<Args = unknown, Data = unknown> = MutationOptions<
   Args,
   Data
@@ -89,7 +89,7 @@ export type NormalizedGenericOptions<Args = unknown, Data = unknown> = ActionOpt
 /** The discriminator selects execution behavior and narrows legal options. */
 export type NormalizedActionOptions<Args = unknown, Data = unknown> =
   | NormalizedGenericOptions<Args, Data>
-  | NormalizedProviderOptions<Args, Data>
+  | NormalizedQueryOptions<Args, Data>
   | NormalizedMutationOptions<Args, Data>;
 
 export interface Action<
@@ -101,10 +101,10 @@ export interface Action<
   readonly options: Options;
   actionName?: string;
 }
-export type ProviderAction<Args = unknown, Data = unknown> = Action<
+export type QueryAction<Args = unknown, Data = unknown> = Action<
   Args,
   Data,
-  NormalizedProviderOptions<Args, Data>
+  NormalizedQueryOptions<Args, Data>
 >;
 export type MutationAction<Args = unknown, Data = unknown> = Action<
   Args,

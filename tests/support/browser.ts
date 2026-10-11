@@ -13,18 +13,15 @@ export async function setup(page: Page, request: APIRequestContext): Promise<str
 export async function mount(
   page: Page,
   html: string,
-  definitions: Record<
-    string,
-    { url: string; timeout?: number; kind?: 'mutation' | 'provider' }
-  > = {},
+  definitions: Record<string, { url: string; timeout?: number; kind?: 'mutation' | 'query' }> = {},
 ): Promise<void> {
   await page.evaluate(
     async ({ html, definitions }) => {
       const { configure } = await import('/packages/runtime/index.js');
-      const { provider, mutation } = await import('/packages/runtime/action.js');
+      const { query, mutation } = await import('/packages/runtime/action.js');
       const actions: Record<string, Action> = {};
       for (const [name, options] of Object.entries(definitions))
-        actions[name] = options.kind === 'mutation' ? mutation(options) : provider(options);
+        actions[name] = options.kind === 'mutation' ? mutation(options) : query(options);
       configure({ actions });
       const documentFragment = new DOMParser().parseFromString(
         '<!doctype html><html><head></head><body>' + html + '</body></html>',

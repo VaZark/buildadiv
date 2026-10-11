@@ -15,10 +15,10 @@ One shape everywhere: **`{ tag, key }`**.
   - In `provides`, relative to each item (same as a list's `data-key`): `'id'`.
   - In `invalidates` and `reconciles`, relative to the **mutation's response body**: `'id'`, `'resource.id'`, `'results.0.id'`, …
 
-A provider declares one global tag plus a key, rather than a flat list of per-item tags, so long lists stay compact:
+A query declares one global tag plus a key, rather than a flat list of per-item tags, so long lists stay compact:
 
 ```js
-export const loadProducts = provider({
+export const loadProducts = query({
   url: '/api/products',
   provides: { tag: 'Product', key: 'id' },
   items: (response) => response.results,   // only if the response isn't already an array of objects
@@ -38,13 +38,13 @@ One compact object records which tags are in use:
 }
 ```
 
-- An entry is **added** when a `<render-template subscribe-to-action>` renders, and **removed** when its tag is invalidated or the element leaves the page.
+- An entry is **added** when a `<use-template subscribe>` renders, and **removed** when its tag is invalidated or the element leaves the page.
 - **Mounted** means "in the registry". Only mounted data is ever refetched.
 
 ## Cache lifetime
 
 - **In memory**, keyed by action name plus serialized args, so every element using the same action and args shares one copy.
-- **Reference-counted.** Each mounted `subscribe-to-action` element is a subscriber. When the count reaches zero, a `keepUnusedFor` timer starts; if nothing subscribes before it ends, the data is dropped.
+- **Reference-counted.** Each mounted `<use-template subscribe>` element is a subscriber. When the count reaches zero, a `keepUnusedFor` timer starts; if nothing subscribes before it ends, the data is dropped.
 
 ## Freshness
 
@@ -70,7 +70,7 @@ Both accept:
 ```js
 import { respectCacheOr } from '../runtime/cache.js';
 
-export const loadProducts = provider({
+export const loadProducts = query({
   url: '/api/products',
   refetchAfter: respectCacheOr(300),
 });
@@ -85,9 +85,9 @@ import { localStore, sessionStore, indexedDbStore } from '../runtime/stores.js';
 
 configure({ persist: sessionStore() });                              // global default
 
-export const loadCatalog = provider({ /* … */ persist: indexedDbStore() });
-export const loadCart    = provider({ /* … */ persist: localStore() });
-export const loadSearch  = provider({ /* … */ persist: false });
+export const loadCatalog = query({ /* … */ persist: indexedDbStore() });
+export const loadCart    = query({ /* … */ persist: localStore() });
+export const loadSearch  = query({ /* … */ persist: false });
 ```
 
 - Default `false`. Built-in stores are plain exported functions, so unused ones tree-shake away and projects can wrap them.
@@ -127,7 +127,7 @@ export const deleteProduct = mutation({
 - Ids match by value: a number and its string form are the same id, so `dataset.key` (always a string) identifies a numeric `id`. The same rule applies to `reconciles`.
 - Mounted queries refetch; unmounted data is never fetched. Changes apply per `data-key`, so only changed items re-render.
 - Paginated queries refetch according to their mode ([02](02-rendering-and-actions.md#pagination)).
-- By default old content stays until fresh data arrives. `onInvalidate: 'pending'` on a provider shows the `on-pending` template during the refetch instead.
+- By default old content stays until fresh data arrives. `onInvalidate: 'pending'` on a query shows the `on-pending` template during the refetch instead.
 - Each invalidated tag emits an `invalidate:Type` event.
 
 ## Reconciliation
@@ -156,7 +156,7 @@ export const createProduct = mutation({
 2. On response, the runtime reads the id at `key` and looks it up under the tag:
    - **Existing id:** the item replaces the old one in the cached response.
    - **New id:** the item is appended **at the end** of every mounted query providing the tag, and added to the registry.
-3. If the provider has a `sort` comparator `(a, b) => number`, the list is re-sorted. Default `null`: no sorting. The comparator decides how to handle non-numeric ids.
+3. If the query has a `sort` comparator `(a, b) => number`, the list is re-sorted. Default `null`: no sorting. The comparator decides how to handle non-numeric ids.
 4. Changing the cached response re-runs that query's `context` function; only the affected item re-renders.
 
 **No optimistic updates.** The UI only changes once the server has answered.

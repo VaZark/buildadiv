@@ -1,25 +1,17 @@
 import { defineConfig } from 'vite-plus';
 
 // Vite+ supplies the static checks (Oxfmt, Oxlint, type-aware linting) and the
-// development environment. Builds stay on `tsc` so output remains plain ES modules.
+// development environment for the whole workspace. Each published package packs
+// itself with its own `vite.config.ts`; development builds stay on `tsc -b`.
 export default defineConfig({
-  // `vp pack`: the runtime as one standalone, minified ES module with bundled typings.
-  pack: {
-    entry: { 'buildadiv-runtime.min': 'packages/runtime/standalone.ts' },
-    outDir: 'dist/lib',
-    format: 'esm',
-    platform: 'browser',
-    target: 'es2022',
-    minify: true,
-    dts: true,
-    sourcemap: true,
-  },
   fmt: {
     singleQuote: true,
     printWidth: 100,
     trailingComma: 'all',
     ignorePatterns: [
       'dist/**',
+      'packages/*/dist/**',
+      'packages/*/lib/**',
       'test-results/**',
       'playwright-report/**',
       'package-lock.json',
@@ -28,7 +20,13 @@ export default defineConfig({
     ],
   },
   lint: {
-    ignorePatterns: ['dist/**', 'test-results/**', 'playwright-report/**'],
+    ignorePatterns: [
+      'dist/**',
+      'packages/*/dist/**',
+      'packages/*/lib/**',
+      'test-results/**',
+      'playwright-report/**',
+    ],
     options: {
       typeAware: true,
       typeCheck: true,

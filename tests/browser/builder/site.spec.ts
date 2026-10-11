@@ -30,7 +30,7 @@ test('a CLI-built page runs on the standalone runtime with its scoped page bundl
   await expect(card).toHaveClass(/selected/);
 
   // One runtime file, one bundle per type, no per-component or source-module requests.
-  expect(loaded).toContain('/lib/buildadiv-runtime.min.js');
+  expect(loaded).toContain('/lib/query-template.min.js');
   expect(loaded.filter((path) => path.includes('/assets/'))).toEqual([
     '/examples/site-output/assets/shop-index.min.css',
     '/examples/site-output/assets/shop-index.min.js',

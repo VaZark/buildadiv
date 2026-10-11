@@ -1,4 +1,4 @@
-import type { DomRoot } from '../shared/types.js';
+import type { DomRoot } from '@buildadiv/shared/types.js';
 
 /**
  * A component's template file and its optional stylesheet and behavior module.

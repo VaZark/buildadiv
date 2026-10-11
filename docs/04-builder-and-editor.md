@@ -28,7 +28,7 @@ Component tags **place** a component **at build time**. Their main use is layout
 <page-layout>
   <h1>Shop</h1>
   <ul>
-    <render-template subscribe-to-action="loadProducts" on-success="product-rows"></render-template>
+    <use-template subscribe="loadProducts" on-success="product-rows"></use-template>
   </ul>
   <p slot="footer">Free shipping over €50.</p>
 </page-layout>
@@ -37,8 +37,8 @@ Component tags **place** a component **at build time**. Their main use is layout
 - The tag name is the component's folder name. It must contain a hyphen, so it never collides with native elements. No project prefix: pages belong to the site owner.
 - Children fill slots: `slot="name"` for named slots, everything else for the default slot.
 - **The build expands component tags into static HTML.** They never reach the browser, so static content works without JS and is visible to search engines.
-- `<render-template>` elements pass through untouched and render in the browser. That's how a static page gets live, data-driven regions.
-- Component tags and `<render-template template="…">` read the same component folders and fill slots by the same rules. The only difference is *when* they render: at build time vs in the browser. See [01 · When to use what](01-templates.md#when-to-use-what).
+- `<use-template>` elements pass through untouched and render in the browser. That's how a static page gets live, data-driven regions.
+- Component tags and `<use-template template="…">` read the same component folders and fill slots by the same rules. The only difference is *when* they render: at build time vs in the browser. See [01 · When to use what](01-templates.md#when-to-use-what).
 
 ## Build-time values
 
@@ -50,7 +50,7 @@ Component tags **place** a component **at build time**. Their main use is layout
 ## Build output
 
 - **Static HTML pages**, with component tags expanded into markup and slots filled.
-- **`<render-template>` elements** left in place for the browser.
+- **`<use-template>` elements** left in place for the browser.
 - **`<template>` blocks** kept only where the browser clones them (lists, action results).
 - **Bundled, minified CSS and JS**, including only the runtime pieces, filters and default functions a project imports.
 
@@ -61,7 +61,7 @@ Runs entirely in the browser.
 | Feature | What it does |
 |---|---|
 | **Library panel** | Discovers `<template data-component>` blocks and reads their bindings, slots, filters, conditionals and lists as the component's interface. Renders preview content and fixture variants |
-| **States** | Previews each template a `<render-template>` maps: pending, success, no content, error |
+| **States** | Previews each template a `<use-template>` maps: pending, success, no content, error |
 | **Canvas** | Composes pages visually with component tags; every edit writes back to source files |
 | **Split view** | Code and design stay in two-way sync |
 | **Importing components** | Loads plain HTML/CSS components (preferred), or React, Vue and similar, to view, compare side by side and iterate. Framework code runs **only in the editor's preview**; nothing framework-based ships |
@@ -72,17 +72,21 @@ Runs entirely in the browser.
 
 ## Packages
 
-The code is split so that logic needed on both sides is written once, and the runtime can be published on its own:
+The repository is an npm workspace. Each package is its own project, with its own
+`package.json`, tsconfig and build, so the runtime and the builder ship and version
+independently:
 
 ```
 packages/
-  shared/    # used by both sides; no DOM-only or build-only code
-             #   filters, the filter-pipeline parser, path resolution (product.name),
-             #   slot-filling rules
-  runtime/   # part 1, client only: <render-template>, binder, actions / providers / mutations,
-             #   tags, cache, events, default behavior functions. Published standalone.
-  builder/   # part 2, build only: HTML parsing, component tags, {{ }}, build pipeline (browser and CLI)
-  editor/    # part 2: the browser editor
+  shared/    @buildadiv/shared          private, never published
+             filters, the filter-pipeline parser, path resolution, slot rules,
+             template references. No DOM-only or build-only code.
+  runtime/   @buildadiv/query-template  part 1, client only: <use-template>, binder,
+             query / mutation / action, tags, cache, events. Published standalone.
+  builder/   @buildadiv/builder         part 2: HTML parsing, component tags, {{ }},
+             component folders, CSS scoping, page bundles, the Node site build and
+             the `buildadiv` CLI.
+  editor/    @buildadiv/editor          part 2: the browser editor (planned)
 ```
 
 **Import rules:**
@@ -95,8 +99,24 @@ packages/
 | `editor` | `shared`, `runtime`, `builder` |
 
 - `runtime` and `builder` **never import from each other**.
+- Inside a package, imports are relative native `.js` paths. **Another package is
+  reached only by name** (`import { resolvePath } from '@buildadiv/shared/path.js'`),
+  never with `../`, and must be declared in the importing package's `package.json`.
+  `npm run validate:architecture` enforces both.
 - A filter or slot rule is written once in `shared`, so it's guaranteed to behave the same at build time and in the browser.
-- The runtime re-exports what users need from `shared` (e.g. `runtime/filters.js`), so projects import from one place. Its bundle only includes the parts of `shared` actually used.
+- **`shared` is private.** Each product's `vp pack` build inlines the shared code it
+  uses, so users install one package with no internal dependencies:
+  - `@buildadiv/query-template` publishes `lib/query-template.min.js` (+ typings), one
+    minified ES module with **no dependencies**. It re-exports the filters, so projects
+    import everything from one place.
+  - `@buildadiv/builder` publishes `lib/index.mjs` (browser-compatible API),
+    `lib/node.mjs` (`@buildadiv/builder/node`: `buildSite`, `viteBundler`, …) and the
+    `buildadiv` CLI. Its only dependencies are `jsdom` and `vite-plus`.
+  - The pack configs allowlist what may be inlined (`@buildadiv/shared` only) and what
+    the output may import, so an accidental dependency fails the build.
+- For development, each package also compiles per module into its own `dist/`
+  (`tsc -b`, project references). The repository's pages and tests use those modules;
+  pages that load them directly map `@buildadiv/shared/` with an import map.
 
 ## Site layout and distribution
 
@@ -106,7 +126,7 @@ A site built with it:
 components/      # one folder per component
 pages/           # page HTML files (existing HTML can be dropped in as is)
 styles/global/   # tokens, resets, layout
-api/             # providers and mutations
+api/             # queries and mutations
 ```
 
 - **Runtime library:** an ES module, from a CDN `<script type="module">` or a package manager. Tree-shakable.
@@ -144,7 +164,7 @@ export default {
 
 For every page in `pages/` (subfolders included) the build:
 
-- loads every component the page mentions (component tags and `<render-template>`
+- loads every component the page mentions (component tags and `<use-template>`
   references, following the components those mention), once each;
 - renders **component tags** into static HTML; their templates don't ship;
 - ships the **templates the runtime renders** in the page, so the browser never fetches them;
@@ -164,7 +184,7 @@ Names must be file-safe (`[\w.-]`).
 (including modules it imports) and Lightning CSS minifies the CSS. Before that, every
 stylesheet is scoped to its component with `scopeCss` ([01](01-templates.md#css-and-js)).
 The runtime knows nothing about this: component templates the build ships for
-`<render-template>` get their `data-c` scope written into their markup, so the copies
+`<use-template>` get their `data-c` scope written into their markup, so the copies
 the runtime renders match the scoped CSS. Styles come before scripts, each
 in first-use order, so the cascade follows component use. Only root-relative files
 inside `root` are bundled.
@@ -236,16 +256,16 @@ Supplied markup keeps its caller's scope attributes.
 
 `{{ }}` writes text and sanitized attributes; returned strings are never reparsed
 as markup or expressions. Only `fallback` is registered by default. Script/style
-contents, comments, runtime `<template>` declarations and `<render-template>`
+contents, comments, runtime `<template>` declarations and `<use-template>`
 subtrees stay untouched. Templates used as definitions are expanded only through
 their cloned content.
 
 Component tags render at build time, so `buildHtml` output does not ship their
-definitions. A hyphenated definition stays only when a `<render-template>` names it
+definitions. A hyphenated definition stays only when a `<use-template>` names it
 (`template`, `on-pending`, `on-success`, `on-no-content`, `on-error`), including
 hosts inside other shipped templates. Single-word runtime declarations always stay.
 A template that page scripts reference only from JavaScript must therefore be
-named by a `<render-template>` in markup or use a single-word name. Full-document parsing follows the browser's HTML rules
+named by a `<use-template>` in markup or use a single-word name. Full-document parsing follows the browser's HTML rules
 (including repairs to malformed HTML); custom component tags need explicit
 closing tags. The builder is static composition, not a Jinja server adapter.
 

@@ -6,15 +6,16 @@ tests. Generated `dist/` files are build output; review the TypeScript source.
 
 ## Package boundaries
 
-| Package   | Responsibility                                                                               | Allowed package dependencies   |
-| --------- | -------------------------------------------------------------------------------------------- | ------------------------------ |
-| `shared`  | Paths, pipelines, filters, slots, sanitization and template references                       | None                           |
-| `runtime` | Client-side rendering and HTTP data lifecycle                                                | `shared`                       |
-| `builder` | Static HTML parsing, components (folders, CSS scoping), page bundles and the Node site build | `shared`                       |
-| `editor`  | Planned browser editor                                                                       | `shared`, `runtime`, `builder` |
+| Package (npm name)                      | Responsibility                                                                               | Allowed package dependencies   |
+| --------------------------------------- | -------------------------------------------------------------------------------------------- | ------------------------------ |
+| `shared` (`@buildadiv/shared`, private) | Paths, pipelines, filters, slots, sanitization and template references                       | None                           |
+| `runtime` (`@buildadiv/query-template`) | Client-side rendering and HTTP data lifecycle                                                | `shared`                       |
+| `builder` (`@buildadiv/builder`)        | Static HTML parsing, components (folders, CSS scoping), page bundles and the Node site build | `shared`                       |
+| `editor` (planned)                      | Browser editor                                                                               | `shared`, `runtime`, `builder` |
 
-`npm run validate:architecture` checks these boundaries, native relative `.js`
-specifiers, and acyclic value imports. Type-only references may cross domains.
+`npm run validate:architecture` checks these boundaries, native `.js` specifiers
+(relative inside a package, by package name across packages, with the dependency
+declared in `package.json`), Node-only adapter isolation, and acyclic value imports. Type-only references may cross domains.
 It also prevents explicit `any` and disabled type checks in library source. This
 validates code organization; it does not implement the future template linter.
 
@@ -91,7 +92,7 @@ blocks are preserved; the first stage does not bundle assets or provide an edito
 - `examples/site/`: a site built by the CLI (`npm run build:site`) into `dist/examples/site-output/`;
   its pages load only the standalone runtime file.
 - `examples/vanilla/`: live runtime shop; all HTTP actions stay in `api/`.
-- `examples/runtime/`: the `<render-template>` gallery (states, lists, nested templates,
+- `examples/runtime/`: the `<use-template>` gallery (states, lists, nested templates,
   subscribe vs load-once, pagination, direct `.data`) on the standalone runtime file;
   `tests/browser/runtime/gallery.spec.ts` walks every section.
 - `examples/builder/`: static composition source and sandboxed output preview.
@@ -108,20 +109,26 @@ Each runtime case resets that state. This makes request-count assertions determi
 
 ## Commands
 
-| Command                         | Checks / output                                                         |
-| ------------------------------- | ----------------------------------------------------------------------- |
-| `npm run typecheck`             | All libraries, examples, fixtures and compile-time contracts            |
-| `npm test`                      | Clean compilation and unit tests                                        |
-| `npm run test:browser`          | Clean compilation and real Chromium integration tests                   |
-| `npm run validate:architecture` | Clean compilation and package/import rules                              |
-| `npm run lint`                  | Oxlint with type-aware rules and type checking; warnings fail           |
-| `npm run format`                | Oxfmt rewrite of maintained sources                                     |
-| `npm run format:check`          | Consistent formatting without edits                                     |
-| `npm run check`                 | One clean build, architecture checks, format, lint and both test layers |
-| `npm run serve-examples`        | Compile and serve both example websites                                 |
+| Command                         | Checks / output                                                                        |
+| ------------------------------- | -------------------------------------------------------------------------------------- |
+| `npm run typecheck`             | `tsc -b` (TypeScript 7): every package, then examples, fixtures and contracts          |
+| `npm test`                      | Clean compilation and unit tests                                                       |
+| `npm run test:browser`          | Clean compilation and real Chromium integration tests                                  |
+| `npm run validate:architecture` | Clean compilation and package/import rules                                             |
+| `npm run lint`                  | Oxlint with type-aware rules and type checking; warnings fail                          |
+| `npm run format`                | Oxfmt rewrite of maintained sources                                                    |
+| `npm run format:check`          | Consistent formatting without edits                                                    |
+| `npm run check`                 | One clean build, architecture checks, format, lint and both test layers                |
+| `npm run build:lib`             | `vp pack` each published package into its `lib/`; copy the runtime file to `dist/lib/` |
+| `npm run serve-examples`        | Compile and serve both example websites                                                |
 
 Formatting and lint settings live in `vite.config.ts` and run through Vite+ (`vp fmt`,
 `vp lint`). `vp env` selects the Node.js and npm versions pinned in `devEngines`.
-Install dependencies with `vp install` (or `npm install`) and the browser with
+Each package compiles into its own `dist/` (project references); `npm run build` mirrors
+those into the repository's `dist/packages/` for the examples and tests, packs the published
+`lib/` outputs, and builds the example site with the packed CLI.
+
+Install dependencies with `vp install` (or `npm install`, which also links the workspace
+packages) and the browser with
 `npx playwright install chromium`. Builds replace only generated `dist/` output,
 preventing moved or deleted modules from surviving as stale JavaScript.

@@ -4,6 +4,10 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Buildadiv · Static component expansion</title>
+    <!-- Workspace packages import the private shared package by name; map it for the browser. -->
+    <script type="importmap">
+      { "imports": { "@buildadiv/shared/": "/packages/shared/" } }
+    </script>
     <script type="module" src="./main.js"></script>
     <style>
       body {

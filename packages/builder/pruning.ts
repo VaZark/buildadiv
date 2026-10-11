@@ -1,10 +1,10 @@
-import type { DomRoot } from '../shared/types.js';
-import { referencedTemplates } from '../shared/references.js';
+import type { DomRoot } from '@buildadiv/shared/types.js';
+import { referencedTemplates } from '@buildadiv/shared/references.js';
 import { isStaticComponentName } from './definitions.js';
 
 /**
  * Names of the static (hyphenated) definitions the runtime will render from this
- * page: those a `<render-template>` names, followed through each named
+ * page: those a `<use-template>` names, followed through each named
  * definition and through every shipped non-static template (runtime
  * declarations, nested lists), so a runtime template placing another component
  * keeps that component too. `lookup` supplies definitions by name, inline or external.
@@ -20,7 +20,7 @@ export function runtimeTemplateNames(
     const scope = pending.pop()!;
     if (scanned.has(scope)) continue;
     scanned.add(scope);
-    for (const host of scope.querySelectorAll('render-template')) {
+    for (const host of scope.querySelectorAll('use-template')) {
       for (const name of referencedTemplates(host)) {
         if (needed.has(name) || !isStaticComponentName(name)) continue;
         needed.add(name);

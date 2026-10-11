@@ -2,7 +2,7 @@ import type { Action } from '../contracts/actions.js';
 import type { ActionResult } from '../contracts/results.js';
 import type { CacheEntry, Subscriber } from '../contracts/queries.js';
 import { executeRequest } from '../actions/request.js';
-import { isProviderMethod } from '../actions/methods.js';
+import { isReadMethod } from '../actions/methods.js';
 import { deliver, getEntry, notify } from './entries.js';
 import { restore } from './persistence.js';
 import { scheduleFresh, scheduleUnused } from './lifetime.js';
@@ -76,7 +76,7 @@ export async function load(
     return executeRequest(
       entry.fn,
       args,
-      isProviderMethod(entry.fn.options.method) && entry.fn.options.method !== 'QUERY'
+      isReadMethod(entry.fn.options.method) && entry.fn.options.method !== 'QUERY'
         ? undefined
         : args,
       { entry, background, refetch: refresh },

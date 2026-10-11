@@ -57,7 +57,7 @@ test('runtime declarations, hosts, comments and script/style contents remain unp
   const result = await page.evaluate(async () => {
     const { buildHtml, parseHtml } = await import('/packages/builder/index.js');
     const source =
-      '<!doctype html><body><!-- {{ missing | unknown }} --><template data-component="static-card"><p>{{ title }}</p></template><template data-component="runtime-list"><static-card></static-card><b data-bind="response.title">{{ title | unknown }}</b></template><render-template template="runtime-list"><static-card title="{{ missing | unknown }}"></static-card></render-template><script>const x = "{{ missing | unknown }}";</script><style>/* {{ missing | unknown }} */</style><static-card></static-card></body>';
+      '<!doctype html><body><!-- {{ missing | unknown }} --><template data-component="static-card"><p>{{ title }}</p></template><template data-component="runtime-list"><static-card></static-card><b data-bind="response.title">{{ title | unknown }}</b></template><use-template template="runtime-list"><static-card title="{{ missing | unknown }}"></static-card></use-template><script>const x = "{{ missing | unknown }}";</script><style>/* {{ missing | unknown }} */</style><static-card></static-card></body>';
     const output = buildHtml(source, { data: { title: 'Static' } });
     const original = parseHtml(source),
       built = parseHtml(output);
@@ -72,8 +72,8 @@ test('runtime declarations, hosts, comments and script/style contents remain unp
         .querySelector<HTMLTemplateElement>('template[data-component="runtime-list"]')!
         .content.querySelector<HTMLElement>('b')!.dataset.c,
       host:
-        original.querySelector('render-template')!.outerHTML ===
-        built.querySelector('render-template')!.outerHTML,
+        original.querySelector('use-template')!.outerHTML ===
+        built.querySelector('use-template')!.outerHTML,
       script:
         original.querySelector('script')!.textContent ===
         built.querySelector('script')!.textContent,

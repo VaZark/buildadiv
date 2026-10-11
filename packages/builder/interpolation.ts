@@ -1,5 +1,5 @@
-import type { FilterRegistry } from '../shared/types.js';
-import { evaluate } from '../shared/pipeline.js';
+import type { FilterRegistry } from '@buildadiv/shared/types.js';
+import { evaluate } from '@buildadiv/shared/pipeline.js';
 
 /**
  * Evaluate only expressions present in authored strings. Filter output is plain

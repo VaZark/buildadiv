@@ -22,8 +22,8 @@ The server prints its URLs on start:
 
 - http://127.0.0.1:4173/examples/vanilla/index.html: the runtime shop.
 - http://127.0.0.1:4173/examples/runtime/index.html: the runtime gallery, a reference for
-  `<render-template>`: every state (pending, success, no content, HTTP error, timeout),
-  keyed lists with nested templates, `subscribe-to-action` vs `load-from-action`, both
+  `<use-template>`: every state (pending, success, no content, HTTP error, timeout),
+  keyed lists with nested templates, `subscribe` vs `load`, both
   pagination modes and a direct template with `.data`, using only the standalone file.
 - http://127.0.0.1:4173/examples/builder/index.html: static component expansion.
 - http://127.0.0.1:4173/examples/playground/index.html: a manual test page with one
@@ -35,20 +35,20 @@ The server prints its URLs on start:
 
 ## Use the runtime on a vanilla page
 
-Run `npm run build`, then copy the single file `dist/lib/buildadiv-runtime.min.js`
-(about 10 kB gzipped; typings in `buildadiv-runtime.min.d.ts`) to your static assets
-and import everything from it. Serve JavaScript with the correct MIME type. Consumers
-need no build step. The per-module files in `dist/packages/runtime/` and
-`dist/packages/shared/` also work when copied together.
+The runtime is the npm package **`@buildadiv/query-template`**: one minified ES
+module with typings and no dependencies (`npm i @buildadiv/query-template`). Without
+a bundler, run `npm run build` and copy the single file
+`dist/lib/query-template.min.js` (about 8.5 kB gzipped) to your static assets.
+Serve JavaScript with the correct MIME type; consumers need no build step.
 
 ```html
 <template data-component="greeting">
   <p>Hello <span data-bind="response.name">Visitor</span></p>
 </template>
-<render-template subscribe-to-action="loadProfile" on-success="greeting"></render-template>
+<use-template subscribe="loadProfile" on-success="greeting"></use-template>
 <script type="module">
-  import { configure, provider } from './buildadiv-runtime.min.js';
-  const loadProfile = provider({ url: '/api/profile' });
+  import { configure, query } from './query-template.min.js';
+  const loadProfile = query({ url: '/api/profile' });
   configure({ actions: { loadProfile } });
 </script>
 ```
@@ -73,7 +73,7 @@ const renameProduct = mutation<{ id: number; name: string }, Product>({
 });
 ```
 
-`<render-template>` renders only templates already in the page and adds no styling
+`<use-template>` renders only templates already in the page and adds no styling
 hooks, so a standalone page can use any global CSS (Bootstrap, Tailwind, your own).
 Components with their own scoped CSS and JS are a builder feature (below).
 
@@ -113,7 +113,7 @@ const output = buildHtml(
 
 Supports nested definitions, multiple roots, attribute props, caller-scoped slots,
 shared filter pipelines, sanitization, and cycle/duplicate diagnostics. Runtime
-`<template>` and `<render-template>` blocks pass through; definitions used only by
+`<template>` and `<use-template>` blocks pass through; definitions used only by
 component tags are rendered at build time and left out of the output.
 Components live in folders (`components/<name>/<name>.html`, plus optional `.css` and
 `.js` that are picked up automatically; CSS is written plainly and scoped for you).

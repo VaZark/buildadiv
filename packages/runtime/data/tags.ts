@@ -1,7 +1,7 @@
 import type { Action } from '../contracts/actions.js';
 import type { ActionResult } from '../contracts/results.js';
 import type { CacheEntry, Invalidation, QueryRefresher } from '../contracts/queries.js';
-import { resolvePath } from '../../shared/path.js';
+import { resolvePath } from '@buildadiv/shared/path.js';
 import { emit } from '../events.js';
 import { resultFor } from '../actions/results.js';
 import { cache, notify } from './entries.js';

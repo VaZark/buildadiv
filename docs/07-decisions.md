@@ -23,7 +23,7 @@ What was decided, grouped by topic, and what each decision replaced. When a deci
 | Decision | Replaces |
 |---|---|
 | **Bindings fill holes with data; slots fill holes with markup from the component's user.** Never use a slot for a value from data | Slots used for data values (e.g. a card's title) |
-| Placement is separate from filling: `<render-template>` places at runtime, component tags place at build time | n/a |
+| Placement is separate from filling: `<use-template>` places at runtime, component tags place at build time | n/a |
 | Binding is split by role: `{{ }}` at build time (part 2, outside `<template>`), `data-bind` / `data-bind-<attr>` at runtime (inside `<template>`). The build skips template contents | One `{{ }}` syntax for every time |
 | Bindings always use `textContent`; URL attributes are sanitized | n/a |
 | **Filters:** one pipeline syntax (`value \| filter:arg`) and one set of functions in `shared`, used by build and runtime. Single-value transforms only | `data-format`, `data-fallback` |
@@ -41,21 +41,23 @@ What was decided, grouped by topic, and what each decision replaced. When a deci
 
 | Decision | Replaces |
 |---|---|
-| `<render-template>` places every component at runtime: `template="name"`, `load-from-action`, `subscribe-to-action`. Its children always fill slots | Runtime component tags; `load-on-client`, `load-on-action` |
-| `load-from-action` loads once; `subscribe-to-action` subscribes to tags. Only subscribers count as mounted | n/a |
+| `<use-template>` places every component at runtime: `template="name"`, `load`, `subscribe`. Its children always fill slots | Runtime component tags; `load-on-client`, `load-on-action` |
+| `load` loads once; `subscribe` subscribes to tags. Only subscribers count as mounted | n/a |
 | State templates live on the element: `on-pending`, `on-success`, `on-no-content`, `on-error`. Actions know nothing about templates | `data-state` on templates; the action's `pending` / `success` / `noContent` / `failure` options; the action's `into` |
 | Unmapped states do nothing. No system defaults | System default templates |
 | No `empty` state. `no-content` means a 204 or empty body; an empty array is ordinary success | `empty` |
-| `action()` is the baseline. `provider()` (`GET`, `QUERY`) and `mutation()` (everything else) are thin layers that reject options outside their role | One generic `action()` only |
+| `action()` is the baseline. `query()` (`GET`, `QUERY`) and `mutation()` (everything else) are thin layers that reject options outside their role | One generic `action()` only |
 | Elements invoke actions with `data-action` (optional `data-on`) and pass no arguments; anything needing arguments is called from a regular JS handler | HTMX-style `data-source` / `data-target` / `data-swap`; `data-args` |
 | Templates receive `{ response, context }`. `context` always has built-in state fields (`pending`, `success`, `noContent`, `error`, `statusCode`, `nextPage`) plus extra fields from the optional `context` function. No separate state object | Templates receiving the raw response or a custom object only |
 | Pagination: `pages` refetches only the current page on invalidation; `infinite` refetches the current page plus `refreshBehind` (default 1) older pages, never newer, and refreshes the rest via `IntersectionObserver` | A single append/swap mode |
 | `nextPage` is a function returning any page param (number, cursor, …) or a falsy value when done; the load-more button hides with `data-if="context.nextPage"` | Runtime auto-hiding the button |
 | `send` / `accepts` are functions; `json`, `text`, `multipart`, `urlencoded` built in; other formats by convention | String formats and registered decoders |
-| Events are `functionName:event`, with no HTTP method. States reuse `<render-template>` names; lifecycle follows htmx 4 (`before:`, `after:`, `finally:`) | `METHOD:fn:phase` with `pre-request` / `sent` / `received` / `failed` / `timed-out` |
+| Events are `functionName:event`, with no HTTP method. States reuse `<use-template>` names; lifecycle follows htmx 4 (`before:`, `after:`, `finally:`) | `METHOD:fn:phase` with `pre-request` / `sent` / `received` / `failed` / `timed-out` |
 | Action names are unique across the project | n/a |
+| The runtime element is `<use-template>` (like SVG `<use>`: place a template here) with `subscribe` / `load` attributes | `<render-template>` with `subscribe-to-action` / `load-from-action` |
+| Read helpers are `query()` (RTK/TanStack vocabulary); role types are `ReadOptions` / `WriteOptions`, `QueryOptions`, `QueryAction`, `ReadMethod`; HTTP `QUERY`-method options are `HttpQueryOptions` | `provider()`, `ProviderOptions`, `ProviderAction`, `ProviderMethod`, `QueryProviderOptions` |
 | The action's `context` function runs in every state and may receive `response: null`; a throwing `context` is reported and adds no fields | A throwing `context` aborting the request with an unhandled rejection |
-| A `data-action` on a non-paginated provider forces a refetch; JS calls read through the cache | Triggers silently returning fresh cached data |
+| A `data-action` on a non-paginated query forces a refetch; JS calls read through the cache | Triggers silently returning fresh cached data |
 | A subscriber or render failure is reported (`reportError`) and does not change the request's state or events | Render exceptions turning a successful request into `error` |
 
 ## Data layer
@@ -82,7 +84,7 @@ What was decided, grouped by topic, and what each decision replaced. When a deci
 | Decision | Replaces |
 |---|---|
 | The builder parses existing HTML as is. Component tags (Astro-style) are expanded into static HTML at build time and never shipped. Their main use is layouts and wrappers filled through slots | Component tags at runtime |
-| Component tags and `<render-template template>` share component folders and slot rules; only *when* they render differs | n/a |
+| Component tags and `<use-template template>` share component folders and slot rules; only *when* they render differs | n/a |
 | The editor may load React/Vue components for preview and comparison only; output stays framework-free | n/a |
 | No declared schemas. A v1.1 linter derives each template's required fields and generates types; TypeScript checks every registered template against at least one of the action's `{ response, context }` return types. The `context` function isn't tested | OpenAPI-style schemas; a `shape` option |
 | Ports map data props to bindings and `children` / render props to slots | Props mapped to "slots or bindings" without a rule |
@@ -96,7 +98,7 @@ What was decided, grouped by topic, and what each decision replaced. When a deci
 | Helper actions return `{ response, context }` in every state; direct components accept `.data`, retaining previews until data is supplied | Unspecified JavaScript rendering/call interface |
 | Component CSS is written plainly and scoped automatically on each selector's last compound (`.card` → `.card[data-c="x"]`) by the builder's `scopeCss` while bundling; explicit `[data-c` selectors are left as written | Hand-written `[data-c]` selectors; CSS Modules class renaming |
 | Folder convention: `<name>.css` / `<name>.js` beside `<name>.html` are picked up when the component is used; the HTML holds only the template. Node checks the disk; the HTTP loader uses `HEAD` requests | `<link>` / `<script>` declarations inside the component file |
-| `<render-template>` only renders templates already in the page: it loads nothing and adds no scope attributes, so standalone pages can use any global CSS (Bootstrap, Tailwind, …). Components (template + CSS + JS, scoping) are purely a builder concept | The runtime loading component folders and adding `data-c` |
+| `<use-template>` only renders templates already in the page: it loads nothing and adds no scope attributes, so standalone pages can use any global CSS (Bootstrap, Tailwind, …). Components (template + CSS + JS, scoping) are purely a builder concept | The runtime loading component folders and adding `data-c` |
 | The builder writes `data-c` into the component templates it ships for the runtime, so runtime-rendered copies match scoped CSS | Runtime-added scope attributes |
 | `buildPage` loads component folders for tags and runtime references, renders tags, ships only runtime templates and reports the components each page uses; component files are never linked one by one | Components only as inline templates; per-component `<link>`/`<script>` tags |
 | Component loading is a builder function (`componentFolder(base)` over HTTP, `nodeComponentFolder` on disk); the builder core still owns no I/O itself | String folder settings |
@@ -106,9 +108,14 @@ What was decided, grouped by topic, and what each decision replaced. When a deci
 | Node-only adapters live in `packages/<package>/node/`, may import `node:*`, `vite-plus` and `jsdom`, and are never imported by browser modules (enforced by the architecture check) | All package code restricted to relative imports |
 | Site builds run in Node with the DOM-based builder and jsdom (browser HTML parsing rules); `buildSite` and a `buildadiv build --config` CLI write pages and per-page bundles | A text-only builder; builds only inside a browser |
 | `buildSite` separates `base` (URL where the output is served) from `assets` (bundle folder in the output) | One asset path used as both URL and output folder |
-| The runtime also ships as one standalone minified ES module, `dist/lib/buildadiv-runtime.min.js` (packed by `vp pack`), with bundled typings | Copying `dist/packages/runtime` and `dist/packages/shared` together |
+| The runtime ships as one standalone minified ES module with bundled typings (`lib/query-template.min.js`, packed by `vp pack`) | Copying `dist/packages/runtime` and `dist/packages/shared` together |
+| npm names: `@buildadiv/query-template` (runtime), `@buildadiv/builder` (builder + `buildadiv` CLI), `@buildadiv/shared` (private). The element stays `<use-template>` | Unnamed `runtime` / `builder` folders inside one private package |
+| The repo is an npm workspace; each package has its own `package.json`, tsconfig (project references, `tsc -b`) and `vp pack` config | One root tsconfig and build for every package |
+| Cross-package imports use package names with a declared dependency, enforced by the architecture check; pages loading per-module output map `@buildadiv/shared/` with an import map | Relative `../shared/` imports |
+| `shared` is private and inlined by each product's pack; pack configs allowlist what may be bundled and imported | Publishing `@buildadiv/shared` |
+| Builds call TypeScript 7 explicitly (`node node_modules/typescript/bin/tsc`), because the `typescript-ast` alias (TS 6, used for the architecture check's parser) also provides a `tsc` command | Relying on whichever `tsc` npm links |
 | Browser tests serve on port 4174 (`TEST_PORT`), separate from `npm run serve-examples` on 4173 (`PORT`) | Both fixed to 4173 |
-| Infinite providers share a sequence; explicit arguments select pages; exported `mergeInfinite` / `mergePages` defaults and `items` enable envelope responses | Unspecified pagination call / viewport integration |
+| Infinite queries share a sequence; explicit arguments select pages; exported `mergeInfinite` / `mergePages` defaults and `items` enable envelope responses | Unspecified pagination call / viewport integration |
 
 ## Initial static expansion
 
@@ -117,8 +124,8 @@ What was decided, grouped by topic, and what each decision replaced. When a deci
 | Builder first stage exposes in-place DOM expansion and HTML parsing/serialization functions; no runtime dependency | Unspecified first implementation boundary |
 | Component attributes become string `props`; slot markup retains caller scope; `{{ }}` results are never reparsed | Open question about passing static values to component tags |
 | Runtime templates and render hosts, script/style text and comments pass through unchanged; unknown custom tags are preserved | Unspecified preservation rules for existing vanilla pages |
-| Build output omits static definitions unless a `<render-template>` (directly or inside a shipped template) names them; in-place expansion keeps them | Every definition shipped in build output |
-| The `<render-template>` attributes that name templates live in `shared`, used by the runtime element and the builder | A runtime-only attribute list |
+| Build output omits static definitions unless a `<use-template>` (directly or inside a shipped template) names them; in-place expansion keeps them | Every definition shipped in build output |
+| The `<use-template>` attributes that name templates live in `shared`, used by the runtime element and the builder | A runtime-only attribute list |
 | Scope attributes belong to component-owned elements; host attributes are used explicitly through `props` | Unspecified root/host attribute forwarding |
 
 ## TypeScript implementation
@@ -127,7 +134,7 @@ What was decided, grouped by topic, and what each decision replaced. When a deci
 |---|---|
 | All library source, examples, test server and tests use strict TypeScript; `tsc` emits ordinary ES modules, declarations and source maps to `dist/` | JavaScript-only implementation source |
 | Keep `.js` import specifiers in `.ts` source; vanilla websites load the emitted files without bundling | Unspecified TypeScript/browser distribution path |
-| Public contracts describe actions/results, providers/mutations, filters, stores and component expansion; request data remains untrusted `unknown` internally | Implicit JavaScript contracts |
+| Public contracts describe actions/results, queries/mutations, filters, stores and component expansion; request data remains untrusted `unknown` internally | Implicit JavaScript contracts |
 | Function comments state purpose and expected behavior, including lifecycle and scope ownership | Implementation-only comments |
 | Action role contracts use request/query/write interfaces, derived forbidden `never` fields, typed method vocabulary, role-specific return types and a normalized discriminator | Runtime arrays of read/write option names and a method set |
 | Standard methods are typed by role; custom HTTP extension methods use the baseline `action()` | Unrestricted string methods on the mutation convenience helper |

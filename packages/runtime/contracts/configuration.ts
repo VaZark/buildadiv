@@ -1,4 +1,4 @@
-import type { FilterRegistry } from '../../shared/types.js';
+import type { FilterRegistry } from '@buildadiv/shared/types.js';
 import type { RegistrableAction } from './actions.js';
 import type { Store } from './storage.js';
 

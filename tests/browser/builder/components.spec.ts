@@ -174,18 +174,18 @@ test('a component wrapper leaves nested runtime hosts and their slot sockets unt
   const result = await page.evaluate(async () => {
     const { buildHtml, parseHtml } = await import('/packages/builder/index.js');
     const output = buildHtml(`<body>
-      <template data-component="static-wrapper"><section><slot name="outside">Fallback</slot><render-template template="live"><slot name="outside">Runtime fallback</slot><p>{{ missing | unknown }}</p></render-template></section></template>
+      <template data-component="static-wrapper"><section><slot name="outside">Fallback</slot><use-template template="live"><slot name="outside">Runtime fallback</slot><p>{{ missing | unknown }}</p></use-template></section></template>
       <static-wrapper><h3 slot="outside">Filled outside</h3></static-wrapper>
     </body>`);
     const doc = parseHtml(output);
     return {
       filled: doc.querySelector('section > h3')!.textContent,
-      runtime: doc.querySelector('section > render-template')!.outerHTML,
+      runtime: doc.querySelector('section > use-template')!.outerHTML,
     };
   });
   expect(result.filled).toBe('Filled outside');
   expect(result.runtime).toBe(
-    '<render-template template="live"><slot name="outside">Runtime fallback</slot><p>{{ missing | unknown }}</p></render-template>',
+    '<use-template template="live"><slot name="outside">Runtime fallback</slot><p>{{ missing | unknown }}</p></use-template>',
   );
 });
 
@@ -198,14 +198,14 @@ test('build output drops static definitions unless a runtime host still renders 
       <template data-component="page-frame"><main><slot>Content</slot></main></template>
       <template data-component="unused-card"><p>Never placed</p></template>
       <template data-component="product-rows" data-accepts="array" data-item="product">
-        <li><render-template template="price-tag"></render-template></li>
+        <li><use-template template="price-tag"></use-template></li>
       </template>
       <template data-component="price-tag"><b>Price</b></template>
-      <template data-component="rows"><render-template on-error="error-note"></render-template></template>
+      <template data-component="rows"><use-template on-error="error-note"></use-template></template>
       <template data-component="error-note"><p>Failed</p></template>
-      <template data-component="dead-host"><render-template template="dead-target"></render-template></template>
+      <template data-component="dead-host"><use-template template="dead-target"></use-template></template>
       <template data-component="dead-target"><p>Only named by an unused definition</p></template>
-      <page-frame><ul><render-template on-success="product-rows"></render-template></ul></page-frame>
+      <page-frame><ul><use-template on-success="product-rows"></use-template></ul></page-frame>
     </body>`;
     const names = (root: ParentNode) =>
       Array.from(
@@ -218,7 +218,7 @@ test('build output drops static definitions unless a runtime host still renders 
     return {
       built: names(built),
       expandedOnly: names(expandedOnly).length,
-      main: built.querySelectorAll('main > ul > render-template').length,
+      main: built.querySelectorAll('main > ul > use-template').length,
     };
   });
   expect(result).toEqual({

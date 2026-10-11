@@ -18,5 +18,5 @@ export enum HttpMethod {
   TRACE = 'TRACE',
 }
 export type Method = `${HttpMethod}`;
-export type ProviderMethod = `${HttpMethod.GET | HttpMethod.QUERY}`;
-export type MutationMethod = Exclude<Method, ProviderMethod>;
+export type ReadMethod = `${HttpMethod.GET | HttpMethod.QUERY}`;
+export type MutationMethod = Exclude<Method, ReadMethod>;

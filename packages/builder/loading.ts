@@ -1,17 +1,17 @@
 import type { ComponentFile, ComponentLoader } from './components.js';
-import type { DomRoot } from '../shared/types.js';
-import { referencedTemplates } from '../shared/references.js';
+import type { DomRoot } from '@buildadiv/shared/types.js';
+import { referencedTemplates } from '@buildadiv/shared/references.js';
 import { isStaticComponentName } from './definitions.js';
 
 /**
  * Collect every component a parsed source might use: hyphenated tags and
- * `<render-template>` references, including those inside template contents.
+ * `<use-template>` references, including those inside template contents.
  * Over-collecting is harmless; unused components contribute nothing to output.
  */
 function mentionedComponents(root: DomRoot, found: Set<string>): void {
   for (const element of root.querySelectorAll('*')) {
     const name = element.localName;
-    if (name === 'render-template') {
+    if (name === 'use-template') {
       for (const reference of referencedTemplates(element))
         if (isStaticComponentName(reference)) found.add(reference);
     } else if (isStaticComponentName(name)) found.add(name);

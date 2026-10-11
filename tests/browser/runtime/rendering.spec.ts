@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import type { RenderTemplate } from '../../../packages/runtime/dom/element.js';
+import type { UseTemplate } from '../../../packages/runtime/dom/element.js';
 import { setup, mount } from '../../support/browser.js';
 
 test('native imports render slots, item bindings and share one fetch', async ({
@@ -64,11 +64,11 @@ test('direct data, nested lists, primitive arrays and truthiness update safely',
     `<template data-component="nested" data-accepts="array" data-from="groups" data-item="group" data-key="id">
     <section><h3 data-bind="group.name">Group name</h3><ul><template data-accepts="array" data-from="group.tags" data-item="tag" data-index="j"><li><span data-bind="tag">Tag</span><b data-bind="j">0</b></li></template></ul>
       <p data-if="group.tags group.active">Available</p><p data-if-not="group.tags">Empty</p>
-    </section></template><render-template id="nested" template="nested"></render-template>`,
+    </section></template><use-template id="nested" template="nested"></use-template>`,
   );
   await page.evaluate(
     () =>
-      (document.querySelector<RenderTemplate>('#nested')!.data = {
+      (document.querySelector<UseTemplate>('#nested')!.data = {
         groups: [{ id: 1, name: 'First', active: true, tags: ['a', 'b'] }],
       }),
   );
@@ -77,7 +77,7 @@ test('direct data, nested lists, primitive arrays and truthiness update safely',
   await expect(page.locator('#nested p').first()).toBeVisible();
   await page.evaluate(
     () =>
-      (document.querySelector<RenderTemplate>('#nested')!.data = {
+      (document.querySelector<UseTemplate>('#nested')!.data = {
         groups: [
           { id: 1, name: 'Changed', active: false, tags: ['c'] },
           { id: 2, name: 'Second', tags: [] },
@@ -98,12 +98,12 @@ test('preview content clears for missing data and unsafe attribute bindings are 
   const errors = await setup(page, request);
   await mount(
     page,
-    `<template data-component="safe"><p data-bind="name">Preview name</p><a data-bind-href="url" href="#">Link</a><img data-bind-src="image" src="/placeholder.png" alt="Preview"><p data-bind="missing | fallback:'a|b:c'">Fallback</p><button data-bind-onclick="code">Button</button></template><render-template id="safe" template="safe"></render-template>`,
+    `<template data-component="safe"><p data-bind="name">Preview name</p><a data-bind-href="url" href="#">Link</a><img data-bind-src="image" src="/placeholder.png" alt="Preview"><p data-bind="missing | fallback:'a|b:c'">Fallback</p><button data-bind-onclick="code">Button</button></template><use-template id="safe" template="safe"></use-template>`,
   );
   await expect(page.locator('#safe p').first()).toHaveText('Preview name');
   await page.evaluate(
     () =>
-      (document.querySelector<RenderTemplate>('#safe')!.data = {
+      (document.querySelector<UseTemplate>('#safe')!.data = {
         url: 'java\nscript:alert(1)',
         image: 'data:text/html,<script>alert(1)</script>',
         code: 'alert(1)',
@@ -117,7 +117,7 @@ test('preview content clears for missing data and unsafe attribute bindings are 
   expect(errors).toEqual([]);
 });
 
-test('render-template renders only templates in the page and loads nothing', async ({
+test('use-template renders only templates in the page and loads nothing', async ({
   page,
   request,
 }) => {
@@ -127,7 +127,7 @@ test('render-template renders only templates in the page and loads nothing', asy
   await page.evaluate(() =>
     document.body.insertAdjacentHTML(
       'beforeend',
-      '<render-template id="absent" template="not-in-page"></render-template>',
+      '<use-template id="absent" template="not-in-page"></use-template>',
     ),
   );
   await expect.poll(() => errors).toContain('Unknown template: not-in-page');

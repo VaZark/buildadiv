@@ -3,6 +3,10 @@
   <head>
     <meta charset="utf-8" />
     <title>Builder-only test page</title>
+    <!-- Workspace packages import the private shared package by name; map it for the browser. -->
+    <script type="importmap">
+      { "imports": { "@buildadiv/shared/": "/packages/shared/" } }
+    </script>
   </head>
   <body>
     <p>No runtime imported.</p>
