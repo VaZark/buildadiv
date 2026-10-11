@@ -25,6 +25,7 @@ interface CatalogPage {
   total: number;
 }
 
+// #region docs:query
 /** Success after a visible delay. Context turns the response into template-ready flags. */
 export const loadOrders = query<unknown, Order[]>({
   url: '/api/orders?delay=700',
@@ -34,7 +35,9 @@ export const loadOrders = query<unknown, Order[]>({
     hasOpen: response?.some((order) => !order.shipped) ?? false,
   }),
 });
+// #endregion
 
+// #region docs:query-states
 /** A 204 response: the no-content state. */
 export const loadNoOrders = query({ url: '/api/orders/none?delay=500' });
 
@@ -48,7 +51,9 @@ export const loadOutage = query({
 
 /** Slower than its 0.1 s timeout: the error state without a status code. */
 export const loadTooSlow = query({ url: '/api/slow', timeout: 0.1 });
+// #endregion
 
+// #region docs:mutations
 /** Marks one order shipped; its response is reconciled into every list showing it. */
 export const shipOrder = mutation<{ id: string }, Order>({
   url: (args) => `/api/orders/${args.id}/ship`,
@@ -57,7 +62,9 @@ export const shipOrder = mutation<{ id: string }, Order>({
 
 /** Reopens every order; invalidating the tag makes every subscribed region refetch. */
 export const reopenOrders = mutation({ url: '/api/orders/reopen', invalidates: 'Order' });
+// #endregion
 
+// #region docs:pagination-pages
 /** One page at a time: next/previous replace the page shown. */
 export const loadCatalogPage = query<number, CatalogPage>({
   url: (page) => `/api/catalog?page=${page}&size=3&delay=300`,
@@ -73,7 +80,9 @@ export const loadCatalogPage = query<number, CatalogPage>({
     previousPage: response && response.page > 1 ? response.page - 1 : null,
   }),
 });
+// #endregion
 
+// #region docs:pagination-infinite
 /** Pages accumulate: "Load more" appends the next page to one growing list. */
 export const loadCatalogFeed = query<number, CatalogPage>({
   url: (page) => `/api/catalog?page=${page}&size=3&delay=300`,
@@ -87,3 +96,4 @@ export const loadCatalogFeed = query<number, CatalogPage>({
   },
   context: (response) => ({ shown: response?.items.length ?? 0, total: response?.total ?? 0 }),
 });
+// #endregion

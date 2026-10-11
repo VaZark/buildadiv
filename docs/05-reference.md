@@ -83,7 +83,7 @@ From [02 · Rendering and actions](02-rendering-and-actions.md#use-template).
 | `invalidates` | mutation | none; `'Tag'`, `['A', 'B']`, `{ tag, key }`, `{ tag, id }` | [03](03-data-layer.md#invalidation) |
 | `reconciles` | mutation | none; `{ tag, key }` | [03](03-data-layer.md#reconciliation) |
 
-Global options via `configure({ … })`: `actions` (explicit name → function registration), `filters`, `persist`, persistence `maxAge` (default 24 h), `buster`, and the formatting defaults `locale` (else each element's nearest `lang`) and `currency` (the default for `currency` filters that name no code).
+Global options via `configureActions({ … })`: `actions` (explicit name → function registration), `filters`, `persist`, persistence `maxAge` (default 24 h), `buster`, and the formatting defaults `locale` (else each element's nearest `lang`) and `currency` (the default for `currency` filters that name no code).
 
 ## Behavior functions
 
@@ -122,7 +122,7 @@ Defined once in `shared`; used by runtime bindings and build-time `{{ }}`.
 | `fallback:'text'` | Always available |
 | `currency:CODE`, `number`, `percent`, `date:style`, `relativeTime:unit` | Provided, opt-in (`Intl`, locale from `<html lang>`) |
 | `upper`, `lower`, `truncate:n` | Provided, opt-in |
-| custom | Any function registered via `configure({ filters })` |
+| custom | Any function registered via `configureActions({ filters })` |
 
 ## Events
 
@@ -136,7 +136,7 @@ Defined once in `shared`; used by runtime bindings and build-time `{{ }}`.
 
 | Group | Exports |
 |---|---|
-| Setup | `configure`; the `<use-template>` element is registered on import (type: `UseTemplate`) |
+| Setup | `configureActions`; the `<use-template>` element is registered on import (type: `UseTemplate`) |
 | Actions | `action`, `query`, `mutation`, `HttpMethod` |
 | Formats | `json`, `text`, `multipart`, `urlencoded` |
 | Cache defaults | `respectCacheOr`, `defaultItems`, `mergeInfinite`, `mergePages` |

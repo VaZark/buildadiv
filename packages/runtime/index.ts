@@ -33,7 +33,7 @@ import { UseTemplate } from './dom/element.js';
 import { installTriggers, scanEvents } from './dom/triggers.js';
 
 /** Explicitly register imported actions/filters and wake hosts awaiting those names. */
-export function configure(options: Configuration = {}): void {
+export function configureActions(options: Configuration = {}): void {
   if (options.actions) registerActions(options.actions);
   if (options.filters) Object.assign(settings.filters, options.filters);
   if (options.persist !== undefined) settings.persist = options.persist;

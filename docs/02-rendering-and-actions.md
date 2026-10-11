@@ -258,9 +258,9 @@ Load the runtime with a normal `<script type="module">`; no bundler or framework
 required. Import actions from `api/` and register their unique names explicitly:
 
 ```js
-import { configure } from '../runtime/index.js';
+import { configureActions } from '../runtime/index.js';
 import { loadProducts, renameProduct } from './api/products.js';
-configure({ actions: { loadProducts, renameProduct } });
+configureActions({ actions: { loadProducts, renameProduct } });
 ```
 
 Registration supplies names for helper-created functions, document events, and
@@ -271,7 +271,7 @@ is assigned; assigning `.data` renders ordinary data without an action.
 Helper-created actions resolve to `{ response, context }` (including error states).
 Request failures emit events rather than creating unhandled promise rejections.
 Hand-written registered actions may return the same shape and reject on failure.
-For custom trigger events, call `configure` before dispatching the event; delegated
+For custom trigger events, call `configureActions` before dispatching the event; delegated
 listeners support elements inserted later. Form submission uses `FormData`, including
 the submitter; a normal JavaScript call passes its argument as the request body.
 
@@ -294,7 +294,7 @@ npm i @buildadiv/query-template
 ```
 
 ```js
-import { configure, query, currency } from '@buildadiv/query-template';
+import { configureActions, query, currency } from '@buildadiv/query-template';
 ```
 
 Without a bundler, copy that one file to any site (`npm run build` also puts it at
@@ -302,9 +302,9 @@ Without a bundler, copy that one file to any site (`npm run build` also puts it 
 
 ```html
 <script type="module">
-  import { configure, query, currency } from '/lib/query-template.min.js';
+  import { configureActions, query, currency } from '/lib/query-template.min.js';
   const loadProducts = query({ url: '/api/products' });
-  configure({ actions: { loadProducts }, filters: { currency } });
+  configureActions({ actions: { loadProducts }, filters: { currency } });
 </script>
 ```
 

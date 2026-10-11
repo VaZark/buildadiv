@@ -17,6 +17,8 @@ export default defineConfig({
       'package-lock.json',
       // Spec tables stay hand-aligned; only the code map is machine-formatted.
       'docs/0[0-7]-*.md',
+      // API docs embed code synced from /examples (npm run docs:sync); don't reflow it.
+      'docs/api/*.md',
     ],
   },
   lint: {

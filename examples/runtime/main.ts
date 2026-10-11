@@ -1,5 +1,5 @@
 import {
-  configure,
+  configureActions,
   currency,
   date,
   lower,
@@ -12,6 +12,7 @@ import {
 import type { UseTemplate } from '/lib/query-template.min.js';
 import * as actions from './api/gallery.js';
 
+// #region docs:configure
 /** A project's own filter is any single-value function; its key is its name in HTML. */
 const initials = (value: unknown): unknown =>
   value == null
@@ -22,13 +23,15 @@ const initials = (value: unknown): unknown =>
         .join('');
 
 // Filters are opt-in: register the provided ones this page uses, plus its own.
-configure({
+configureActions({
   actions: { ...actions },
   filters: { currency, number, percent, date, relativeTime, upper, lower, truncate, initials },
   // The currency for `currency` when a pipeline names none; Intl can't infer one from a locale.
   currency: 'USD',
 });
+// #endregion
 
+// #region docs:arguments
 /**
  * Actions that need arguments are called from ordinary listeners. The id comes
  * from the row's rendered `data-key`; the page number from a bound attribute.
@@ -42,7 +45,9 @@ document.addEventListener('click', (event) => {
   const previous = target?.closest<HTMLElement>('.previous-page');
   if (previous?.dataset.page) void actions.loadCatalogPage(Number(previous.dataset.page));
 });
+// #endregion
 
+// #region docs:direct-data
 // A direct template has no action: assigning `.data` renders it.
 document.querySelector('#fill-note')!.addEventListener('click', () => {
   document.querySelector<UseTemplate>('#note')!.data = {
@@ -50,6 +55,7 @@ document.querySelector('#fill-note')!.addEventListener('click', () => {
     author: 'You',
   };
 });
+// #endregion
 
 // The filter table is a direct template too; its data is plain values to format.
 document.querySelector<UseTemplate>('#filter-examples')!.data = {

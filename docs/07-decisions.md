@@ -27,9 +27,9 @@ What was decided, grouped by topic, and what each decision replaced. When a deci
 | Binding is split by role: `{{ }}` at build time (part 2, outside `<template>`), `data-bind` / `data-bind-<attr>` at runtime (inside `<template>`). The build skips template contents | One `{{ }}` syntax for every time |
 | Bindings always use `textContent`; URL attributes are sanitized | n/a |
 | **Filters:** one pipeline syntax (`value \| filter:arg`) and one set of functions in `shared`, used by build and runtime. Single-value transforms only | `data-format`, `data-fallback` |
-| Only `fallback` ships by default; every other filter is opt-in via `configure({ filters })`. Unregistered filters are an error | Built-in formatters always shipped; custom formatters as a v3 feature |
-| Formatting filters are always locale-aware: per-use trailing locale argument, then `configure({ locale })` / build `locale`, then the element's nearest `lang` (the built page's, at build time), then the environment default. Filters receive these defaults as `this` from the runtime or builder | Filters reading the global `document`'s `<html lang>` (the editor's page at build time; the machine's locale in Node) |
-| `currency` without a code uses `configure({ currency })` / build `currency`; with neither it throws. Filters only resolve strings and delegate all locale logic and validation to `Intl`, so the code carries no locale data | `USD` by default; a hand-maintained region → currency table |
+| Only `fallback` ships by default; every other filter is opt-in via `configureActions({ filters })`. Unregistered filters are an error | Built-in formatters always shipped; custom formatters as a v3 feature |
+| Formatting filters are always locale-aware: per-use trailing locale argument, then `configureActions({ locale })` / build `locale`, then the element's nearest `lang` (the built page's, at build time), then the environment default. Filters receive these defaults as `this` from the runtime or builder | Filters reading the global `document`'s `<html lang>` (the editor's page at build time; the machine's locale in Node) |
+| `currency` without a code uses `configureActions({ currency })` / build `currency`; with neither it throws. Filters only resolve strings and delegate all locale logic and validation to `Intl`, so the code carries no locale data | `USD` by default; a hand-maintained region → currency table |
 | Missing values are skipped unless a `fallback` filter is given | n/a |
 | To bind a few words inside a line, wrap them in a `<span>` | n/a |
 | Lists: the list component declares `data-accepts="array"`, `data-item`, `data-index`, `data-key`. Item components stay agnostic | `data-each` at the point of use |
@@ -96,7 +96,7 @@ What was decided, grouped by topic, and what each decision replaced. When a deci
 
 | Decision | Replaces |
 |---|---|
-| Native browser ES modules; `configure({ actions })` explicitly registers imported functions under unique HTML/event names | Unspecified discovery of module-local action exports |
+| Native browser ES modules; `configureActions({ actions })` explicitly registers imported functions under unique HTML/event names | Unspecified discovery of module-local action exports |
 | Helper actions return `{ response, context }` in every state; direct components accept `.data`, retaining previews until data is supplied | Unspecified JavaScript rendering/call interface |
 | Component CSS is written plainly and scoped automatically on each selector's last compound (`.card` → `.card[data-c="x"]`) by the builder's `scopeCss` while bundling; explicit `[data-c` selectors are left as written | Hand-written `[data-c]` selectors; CSS Modules class renaming |
 | Folder convention: `<name>.css` / `<name>.js` beside `<name>.html` are picked up when the component is used; the HTML holds only the template. Node checks the disk; the HTTP loader uses `HEAD` requests | `<link>` / `<script>` declarations inside the component file |

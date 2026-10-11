@@ -1,7 +1,7 @@
 import type { SiteOptions } from '../../packages/builder/node/site.js';
 import { currency, upper } from '../../packages/shared/filters.js';
 
-// Built with: node dist/packages/builder/node/cli.js build --config dist/examples/site/buildadiv.config.js
+// Built by `npm run build:site`: buildadiv build --config dist/examples/site/buildadiv.config.js
 // `root` and `outDir` resolve against this file (its compiled copy in dist/).
 const config: SiteOptions = {
   root: '.',

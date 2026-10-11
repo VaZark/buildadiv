@@ -32,7 +32,7 @@ test('filters give identical results in runtime bindings and build-time {{ }}', 
   const errors = await setup(page, request);
   const result = await page.evaluate(
     async ({ pipelines }) => {
-      const { configure } = await import('/packages/runtime/index.js');
+      const { configureActions } = await import('/packages/runtime/index.js');
       const filters = await import('/packages/runtime/filters.js');
       const { buildHtml, parseHtml } = await import('/packages/builder/index.js');
       const initials = (value: unknown) =>
@@ -43,7 +43,7 @@ test('filters give identical results in runtime bindings and build-time {{ }}', 
       // A deliberately unsafe filter: attribute sanitization must still apply to its output.
       const unsafe = () => 'javascript:alert(1)';
       const registry = { ...filters, initials, unsafe };
-      configure({ filters: registry });
+      configureActions({ filters: registry });
       const data = {
         price: 1234.5,
         ratio: 0.256,
@@ -135,10 +135,10 @@ test('formatting follows the nearest lang, at runtime and in the page being buil
 }) => {
   await setup(page, request);
   const result = await page.evaluate(async () => {
-    const { configure } = await import('/packages/runtime/index.js');
+    const { configureActions } = await import('/packages/runtime/index.js');
     const { currency, date } = await import('/packages/runtime/filters.js');
     const { buildHtml, parseHtml } = await import('/packages/builder/index.js');
-    configure({ filters: { currency, date }, currency: 'EUR' });
+    configureActions({ filters: { currency, date }, currency: 'EUR' });
     const data = { price: 1234.5, when: '2025-01-15T12:00:00' };
 
     // Runtime: one template, rendered in an English page and inside a German section.
@@ -154,7 +154,7 @@ test('formatting follows the nearest lang, at runtime and in the page being buil
       return host.textContent!.trim();
     };
     const runtime = { english: render('#money-en'), german: render('#money-de') };
-    configure({ locale: 'fr-FR' });
+    configureActions({ locale: 'fr-FR' });
     const configured = render('#money-en');
 
     // Build time: the built page's own languages decide, not this (English) page's.

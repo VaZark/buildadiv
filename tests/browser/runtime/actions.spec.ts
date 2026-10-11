@@ -77,7 +77,7 @@ test('form submission sends multipart fields and submitter; custom events invoke
 }) => {
   const errors = await setup(page, request);
   await page.evaluate(async () => {
-    const { configure } = await import('/packages/runtime/index.js');
+    const { configureActions } = await import('/packages/runtime/index.js');
     const { mutation } = await import('/packages/runtime/action.js');
     window.formResult = null;
     window.customArgs = 'unset';
@@ -89,7 +89,7 @@ test('form submission sends multipart fields and submitter; custom events invoke
       'submitTest:success',
       (event) => (window.formResult = (event as CustomEvent).detail.result.response),
     );
-    configure({ actions: { submitTest, customTest } });
+    configureActions({ actions: { submitTest, customTest } });
   });
   await mount(
     page,

@@ -17,12 +17,12 @@ export async function mount(
 ): Promise<void> {
   await page.evaluate(
     async ({ html, definitions }) => {
-      const { configure } = await import('/packages/runtime/index.js');
+      const { configureActions } = await import('/packages/runtime/index.js');
       const { query, mutation } = await import('/packages/runtime/action.js');
       const actions: Record<string, Action> = {};
       for (const [name, options] of Object.entries(definitions))
         actions[name] = options.kind === 'mutation' ? mutation(options) : query(options);
-      configure({ actions });
+      configureActions({ actions });
       const documentFragment = new DOMParser().parseFromString(
         '<!doctype html><html><head></head><body>' + html + '</body></html>',
         'text/html',

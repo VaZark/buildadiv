@@ -24,6 +24,7 @@
         <em>Reload</em> to see the pending state again.
       </p>
       <div class="grid">
+        <!-- #region docs:states -->
         <article class="panel" id="state-success">
           <h3>Success</h3>
           <use-template
@@ -35,6 +36,7 @@
           ></use-template>
           <button class="secondary" data-action="loadOrders">Reload</button>
         </article>
+        <!-- #endregion -->
         <article class="panel" id="state-empty">
           <h3>No content (204)</h3>
           <use-template
@@ -106,6 +108,7 @@
         </li>
       </ol>
       <div class="grid">
+        <!-- #region docs:subscribe-load -->
         <article class="panel" id="subscribed">
           <h3>subscribe</h3>
           <ul>
@@ -120,6 +123,7 @@
           </ul>
           <p class="muted">Keeps what it loaded first.</p>
         </article>
+        <!-- #endregion -->
       </div>
       <button class="secondary" data-action="reopenOrders">Reopen all orders</button>
     </section>
@@ -147,9 +151,11 @@
         <code>on-pending</code>: the first placeholder is the element's own content, and the list
         stays on screen while more items load.
       </p>
+      <!-- #region docs:feed-host -->
       <use-template subscribe="loadCatalogFeed" on-success="catalog-feed">
         <p class="muted" aria-busy="true">Loading the feed…</p>
       </use-template>
+      <!-- #endregion -->
     </section>
 
     <section id="direct">
@@ -159,9 +165,11 @@
         own markup fills its <code>body</code> slot. Assigning <code>.data</code> fills the
         bindings.
       </p>
+      <!-- #region docs:direct-host -->
       <use-template id="note" template="note-card">
         <p slot="body">This paragraph is the page author's markup, placed through a slot.</p>
       </use-template>
+      <!-- #endregion -->
       <button id="fill-note">Fill from .data</button>
     </section>
 
@@ -170,12 +178,13 @@
       <p>
         A binding is a path plus filters, applied left to right:
         <code>path | filter | filter:arg</code>. Only <code>fallback</code> is built in; this page
-        registers the provided filters and one of its own with <code>configure({ filters })</code>.
-        Formatting is always locale-aware. The locale is the filter's own last argument
-        (<code>number:de-DE</code>), else <code>configure({ locale })</code>, else the element's
-        nearest <code>lang</code> (this page: <code>en</code>), else the browser's default. A
-        currency is named (<code>currency:EUR</code>) or configured. The builder runs the same
-        functions for <code>{{ }}</code>, using the language of the page it builds.
+        registers the provided filters and one of its own with
+        <code>configureActions({ filters })</code>. Formatting is always locale-aware. The locale is
+        the filter's own last argument (<code>number:de-DE</code>), else
+        <code>configureActions({ locale })</code>, else the element's nearest <code>lang</code> (this
+        page: <code>en</code>), else the browser's default. A currency is named
+        (<code>currency:EUR</code>) or configured. The builder runs the same functions for
+        <code>{{ }}</code>, using the language of the page it builds.
       </p>
       <use-template id="filter-examples" template="filter-table"></use-template>
     </section>
@@ -205,6 +214,7 @@
     </template>
 
     <!-- Section 2: a keyed list with two nested lists per row -->
+    <!-- #region docs:list -->
     <template
       data-component="order-rows"
       data-accepts="array"
@@ -235,6 +245,7 @@
         </ul>
       </li>
     </template>
+    <!-- #endregion -->
 
     <!-- Section 3: the same compact list for both region kinds -->
     <template data-component="order-status" data-accepts="array" data-item="order" data-key="id">
@@ -245,6 +256,7 @@
     </template>
 
     <!-- Section 4: one page of an envelope response, with its navigation -->
+    <!-- #region docs:pages -->
     <template data-component="catalog-page">
       <ol class="catalog">
         <template data-accepts="array" data-from="response.items" data-item="item" data-key="sku">
@@ -268,8 +280,10 @@
         Next
       </button>
     </template>
+    <!-- #endregion -->
 
     <!-- Section 5: the merged infinite list -->
+    <!-- #region docs:feed -->
     <template data-component="catalog-feed">
       <ol class="feed">
         <template data-accepts="array" data-from="response.items" data-item="item" data-key="sku">
@@ -285,6 +299,7 @@
       </button>
       <p class="muted" data-if-not="context.nextPage">That's everything.</p>
     </template>
+    <!-- #endregion -->
 
     <!-- Section 7: every filter, its pipeline next to its result -->
     <template data-component="filter-table">
@@ -306,7 +321,7 @@
             <td><code>order.total | currency</code></td>
             <td class="result" data-bind="order.total | currency">$0.00</td>
             <td class="muted">
-              The configured currency: <code>configure({ currency: 'USD' })</code>
+              The configured currency: <code>configureActions({ currency: 'USD' })</code>
             </td>
           </tr>
           <tr>
@@ -429,6 +444,7 @@
     </template>
 
     <!-- Section 6: bindings plus a slot for page markup -->
+    <!-- #region docs:direct -->
     <template data-component="note-card">
       <article class="note">
         <h3 data-bind="title">Preview title</h3>
@@ -436,5 +452,6 @@
         <footer>By <span data-bind="author">someone</span></footer>
       </article>
     </template>
+    <!-- #endregion -->
   </body>
 </html>

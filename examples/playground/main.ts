@@ -1,8 +1,8 @@
-import { configure } from '../../packages/runtime/index.js';
+import { configureActions } from '../../packages/runtime/index.js';
 import { currency } from '../../packages/runtime/filters.js';
 import * as actions from './api/playground.js';
 
-configure({ filters: { currency }, actions: { ...actions } });
+configureActions({ filters: { currency }, actions: { ...actions } });
 
 /** Page buttons pass arguments, so they use ordinary listeners rather than data-action. */
 for (const button of document.querySelectorAll<HTMLButtonElement>('[data-page]')) {

@@ -7,7 +7,7 @@ test('infinite pagination loads more and marks page rows; pages mode replaces', 
 }) => {
   const errors = await setup(page, request);
   await page.evaluate(async () => {
-    const { configure } = await import('/packages/runtime/index.js');
+    const { configureActions } = await import('/packages/runtime/index.js');
     const { query } = await import('/packages/runtime/action.js');
     const make = (mode: 'pages' | 'infinite') =>
       query<number>({
@@ -18,7 +18,7 @@ test('infinite pagination loads more and marks page rows; pages mode replaces', 
           nextPage: (_response, page) => (page < 3 ? page + 1 : null),
         },
       });
-    configure({ actions: { infiniteTest: make('infinite'), pagesTest: make('pages') } });
+    configureActions({ actions: { infiniteTest: make('infinite'), pagesTest: make('pages') } });
   });
   await mount(
     page,
@@ -40,7 +40,7 @@ test('infinite viewport invalidation refreshes nearby older pages when scrolling
 }) => {
   const errors = await setup(page, request);
   await page.evaluate(async () => {
-    const { configure } = await import('/packages/runtime/index.js');
+    const { configureActions } = await import('/packages/runtime/index.js');
     const { query, mutation } = await import('/packages/runtime/action.js');
     const viewportTest = query<number>({
       url: (page) => '/api/pages?page=' + page,
@@ -52,7 +52,7 @@ test('infinite viewport invalidation refreshes nearby older pages when scrolling
       },
     });
     const invalidateViewport = mutation({ url: '/api/import', invalidates: 'Viewport' });
-    configure({ actions: { viewportTest, invalidateViewport } });
+    configureActions({ actions: { viewportTest, invalidateViewport } });
     window.viewportTest = viewportTest;
     window.invalidateViewport = invalidateViewport;
   });

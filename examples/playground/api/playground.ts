@@ -17,12 +17,14 @@ export const loadProducts = query<unknown, Product[]>({
   provides: { tag: 'Product', key: 'id' },
 });
 
+// #region docs:invalidate-item
 /** Ids arrive from `dataset.key` as strings; invalidation must still match numeric ids. */
 export const deleteProduct = mutation<{ id: string }>({
   method: 'DELETE',
   url: (args) => `/api/products/${args.id}`,
   invalidates: { tag: 'Product', id: (args) => args.id },
 });
+// #endregion
 
 /** Restores the demo data; the subscribed product list refetches through its tag. */
 export const resetDemo = mutation({ url: '/api/reset', invalidates: 'Product' });

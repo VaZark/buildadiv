@@ -122,10 +122,10 @@ export const renameProduct = mutation({
 **4. Registering the filters the page uses:**
 
 ```js
-import { configure } from '../runtime/index.js';
+import { configureActions } from '../runtime/index.js';
 import { currency } from '../runtime/filters.js';
 
-configure({ filters: { currency } });
+configureActions({ filters: { currency } });
 ```
 
 What happens: the element calls `loadProducts`, shows `product-skeleton`, then stamps `product-rows` once per product. When `renameProduct` succeeds, its response is upserted into the cache by `id`, and only that one `<li>` re-renders.

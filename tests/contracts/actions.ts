@@ -1,4 +1,4 @@
-import { configure } from '../../packages/runtime/index.js';
+import { configureActions } from '../../packages/runtime/index.js';
 import { action, mutation, query } from '../../packages/runtime/action.js';
 import { json } from '../../packages/runtime/formats.js';
 import type { ActionResult, NormalizedActionOptions } from '../../packages/runtime/types.js';
@@ -19,7 +19,7 @@ async function verifyPublicContracts(): Promise<void> {
     method: 'PUT',
     url: (args) => `/api/products/${args.id}`,
   });
-  configure({ actions: { load, rename } });
+  configureActions({ actions: { load, rename } });
   const result: ActionResult<Product[]> = await load({ category: 'clothing' });
   result.response?.forEach((product) => product.name.toUpperCase());
   await rename({ id: 1, name: 'Scarf' });

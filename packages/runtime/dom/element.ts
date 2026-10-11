@@ -60,7 +60,7 @@ export class UseTemplate extends HTMLElement {
     if (this.started || !this.isConnected) return;
     const name = this.getAttribute('subscribe') || this.getAttribute('load');
     const fn = name ? settings.actions.get(name) : undefined;
-    // configure() wakes waiting elements once module-local actions are registered.
+    // configureActions() wakes waiting elements once module-local actions are registered.
     if (name && !fn) return;
     this.started = true;
     if (!name) {

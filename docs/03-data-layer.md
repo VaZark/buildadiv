@@ -83,7 +83,7 @@ Opt-in, set globally with per-action overrides. `persist` takes a **store object
 ```js
 import { localStore, sessionStore, indexedDbStore } from '../runtime/stores.js';
 
-configure({ persist: sessionStore() });                              // global default
+configureActions({ persist: sessionStore() });                              // global default
 
 export const loadCatalog = query({ /* … */ persist: indexedDbStore() });
 export const loadCart    = query({ /* … */ persist: localStore() });

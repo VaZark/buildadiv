@@ -147,17 +147,17 @@ One pipeline syntax and one set of filter functions, shared by runtime bindings 
 - **Opt-in.** Only `fallback` ships by default. Every other filter is imported and registered by the developer, so nothing unused ships:
 
 ```js
-import { configure } from '../runtime/index.js';
+import { configureActions } from '../runtime/index.js';
 import { currency, number, upper } from '../runtime/filters.js';   // re-exported from shared
 import { slugify } from './my-filters.js';   // a project's own filter is just a function
 
-configure({ filters: { currency, number, upper, slugify } });
+configureActions({ filters: { currency, number, upper, slugify } });
 ```
 
 | Filter | Arguments (default) | Example → result | Notes |
 |---|---|---|---|
 | `fallback` | text (`''`) | `nickname \| fallback:'none'` → `none` | Always available. Replaces only `null`, `undefined` and `''`; keeps `0` and `false` |
-| `currency` | code (the configured one), locale | `1234.5 \| currency:EUR` → `€1,234.50` in `en`, `1.234,50 €` in `de-DE` | Without a code, `configure({ currency })` / the `currency` build option; with neither it throws, since `Intl` can't pick a currency for a locale. Invalid codes are `Intl` errors |
+| `currency` | code (the configured one), locale | `1234.5 \| currency:EUR` → `€1,234.50` in `en`, `1.234,50 €` in `de-DE` | Without a code, `configureActions({ currency })` / the `currency` build option; with neither it throws, since `Intl` can't pick a currency for a locale. Invalid codes are `Intl` errors |
 | `number` | locale | `9876543 \| number` → `9,876,543` / `9.876.543` (`de-DE`) | |
 | `percent` | locale | `0.256 \| percent` → `26%` | The value is a fraction |
 | `date` | style: `full`, `long`, `medium`, `short` (`medium`); locale | `'2025-01-15T12:00' \| date:long` → `January 15, 2025` | Invalid dates or styles throw |
@@ -169,11 +169,11 @@ configure({ filters: { currency, number, upper, slugify } });
 **Every formatting filter is locale-aware**, with optional overrides. The locale is, in order:
 
 1. the filter's own last argument: `number:de-DE`, `currency:EUR:fr-FR`, `date:long:ja-JP`. Leave an earlier argument empty to keep its default: `date::fr-FR`;
-2. a configured locale: `configure({ locale })` at runtime, the `locale` option when building;
+2. a configured locale: `configureActions({ locale })` at runtime, the `locale` option when building;
 3. the **nearest `lang`** of the element: `<html lang>`, or a section's own `lang`, so one page can mix languages. The builder uses the page it builds, so pages in different languages build correctly in the same run;
 4. the environment's default (the browser's, or the build machine's).
 
-The filters only resolve these strings and hand them to `Intl`, which does all locale work and validation; invalid locales, codes or styles surface as `Intl`'s own errors. A currency is a named code (`currency:EUR`) or the configured one (`configure({ currency })` / the `currency` build option).
+The filters only resolve these strings and hand them to `Intl`, which does all locale work and validation; invalid locales, codes or styles surface as `Intl`'s own errors. A currency is a named code (`currency:EUR`) or the configured one (`configureActions({ currency })` / the `currency` build option).
 
 - **Missing values pass through** every provided filter unchanged, so `fallback` can come last: `nickname | upper | fallback:'—'`.
 - **Arguments** are literals: numbers (`truncate:4`), bare words (`currency:EUR`) or quoted strings, which may contain `|` and `:` (`fallback:'a|b'`; `\'` escapes a quote).

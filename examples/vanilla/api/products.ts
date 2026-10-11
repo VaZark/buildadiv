@@ -12,10 +12,12 @@ export const loadProducts = query<unknown, Product[]>({
   url: '/api/products',
   provides: { tag: 'Product', key: 'id' },
 });
+// #region docs:send-json
 export const renameProduct = mutation<{ id: number; name: string }, Product>({
   method: 'PUT',
   url: (args) => `/api/products/${args.id}`,
   send: json,
   reconciles: { tag: 'Product', key: 'id' },
 });
+// #endregion
 export const importProducts = mutation({ url: '/api/import', invalidates: 'Product' });
