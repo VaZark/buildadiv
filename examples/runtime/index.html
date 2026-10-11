@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Buildadiv · Runtime gallery</title>
+    <link rel="stylesheet" href="./style.css" />
+    <script type="module" src="./main.js"></script>
+  </head>
+  <body>
+    <header>
+      <h1>Runtime gallery</h1>
+      <p>
+        Every <code>&lt;render-template&gt;</code> pattern on one page, using only the standalone
+        runtime file. Templates live in this page; styling is ordinary global CSS.
+      </p>
+    </header>
+
+    <section id="states">
+      <h2>1 · Every state</h2>
+      <p>
+        Four regions map the same templates to <code>on-pending</code>, <code>on-success</code>,
+        <code>on-no-content</code> and <code>on-error</code>. Each action ends differently. Click
+        <em>Reload</em> to see the pending state again.
+      </p>
+      <div class="grid">
+        <article class="panel" id="state-success">
+          <h3>Success</h3>
+          <render-template
+            subscribe-to-action="loadOrders"
+            on-pending="state-pending"
+            on-success="order-summary"
+            on-no-content="state-empty"
+            on-error="state-error"
+          ></render-template>
+          <button data-action="loadOrders">Reload</button>
+        </article>
+        <article class="panel" id="state-empty">
+          <h3>No content (204)</h3>
+          <render-template
+            subscribe-to-action="loadNoOrders"
+            on-pending="state-pending"
+            on-success="order-summary"
+            on-no-content="state-empty"
+            on-error="state-error"
+          ></render-template>
+          <button data-action="loadNoOrders">Reload</button>
+        </article>
+        <article class="panel" id="state-error">
+          <h3>Error (HTTP 503)</h3>
+          <render-template
+            subscribe-to-action="loadOutage"
+            on-pending="state-pending"
+            on-success="order-summary"
+            on-no-content="state-empty"
+            on-error="state-error"
+          ></render-template>
+          <button data-action="loadOutage">Retry</button>
+        </article>
+        <article class="panel" id="state-timeout">
+          <h3>Error (timeout)</h3>
+          <render-template
+            subscribe-to-action="loadTooSlow"
+            on-pending="state-pending"
+            on-success="order-summary"
+            on-no-content="state-empty"
+            on-error="state-error"
+          ></render-template>
+          <button data-action="loadTooSlow">Retry</button>
+        </article>
+      </div>
+    </section>
+
+    <section id="lists">
+      <h2>2 · Lists and nested templates</h2>
+      <p>
+        <code>data-accepts="array"</code> stamps one row per order, keyed by <code>id</code>. Inside
+        each row, two nested templates list the order's tags (an array of strings) and its line
+        items (<code>data-from="order.items"</code>). <code>data-if</code> /
+        <code>data-if-not</code> switch per-row content. This region shares section 1's
+        <code>loadOrders</code> request. <em>Mark shipped</em> calls a mutation whose response is
+        reconciled into the cache: only that row updates, without refetching.
+      </p>
+      <ul class="orders">
+        <render-template
+          subscribe-to-action="loadOrders"
+          on-pending="state-pending"
+          on-success="order-rows"
+          on-error="state-error"
+        ></render-template>
+      </ul>
+    </section>
+
+    <section id="modes">
+      <h2>3 · subscribe-to-action vs load-from-action</h2>
+      <p>
+        Both lists start from the same <code>loadOrders</code> data. A
+        <code>subscribe-to-action</code> region is <strong>mounted</strong>: reconciliation,
+        invalidation and freshness keep it current. A <code>load-from-action</code> region calls the
+        action once, renders the result and stops listening.
+      </p>
+      <ol class="steps">
+        <li><em>Mark shipped</em> on an order in section 2: reconciled, no request.</li>
+        <li>
+          <em>Reopen all orders</em>: the <code>Order</code> tag is invalidated and subscribed
+          regions refetch.
+        </li>
+      </ol>
+      <div class="grid">
+        <article class="panel" id="subscribed">
+          <h3>subscribe-to-action</h3>
+          <ul>
+            <render-template
+              subscribe-to-action="loadOrders"
+              on-success="order-status"
+            ></render-template>
+          </ul>
+          <p class="muted">Follows every change.</p>
+        </article>
+        <article class="panel" id="loaded-once">
+          <h3>load-from-action</h3>
+          <ul>
+            <render-template
+              load-from-action="loadOrders"
+              on-success="order-status"
+            ></render-template>
+          </ul>
+          <p class="muted">Keeps what it loaded first.</p>
+        </article>
+      </div>
+      <button data-action="reopenOrders">Reopen all orders</button>
+    </section>
+
+    <section id="pages">
+      <h2>4 · Pagination: one page at a time</h2>
+      <p>
+        <code>paginated: { mode: 'pages' }</code>. <em>Next</em> is a plain
+        <code>data-action</code> (it loads the next page); <em>Previous</em> passes a page number
+        from a listener. <code>data-if</code> hides each button at the ends.
+      </p>
+      <render-template
+        subscribe-to-action="loadCatalogPage"
+        on-pending="state-pending"
+        on-success="catalog-page"
+        on-error="state-error"
+      ></render-template>
+    </section>
+
+    <section id="feed">
+      <h2>5 · Pagination: infinite list</h2>
+      <p>
+        <code>paginated: { mode: 'infinite' }</code> with a <code>merge</code> function for the
+        <code>{ items, page, pages }</code> envelope. There's deliberately no
+        <code>on-pending</code>: the first placeholder is the element's own content, and the list
+        stays on screen while more items load.
+      </p>
+      <render-template subscribe-to-action="loadCatalogFeed" on-success="catalog-feed">
+        <p class="muted">Loading the feed…</p>
+      </render-template>
+    </section>
+
+    <section id="direct">
+      <h2>6 · A template without an action</h2>
+      <p>
+        <code>template="note-card"</code> renders immediately with its preview content; the page's
+        own markup fills its <code>body</code> slot. Assigning <code>.data</code> fills the
+        bindings.
+      </p>
+      <render-template id="note" template="note-card">
+        <p slot="body">This paragraph is the page author's markup, placed through a slot.</p>
+      </render-template>
+      <button id="fill-note">Fill from .data</button>
+    </section>
+
+    <!-- State templates shared by every region -->
+    <template data-component="state-pending">
+      <p class="muted" aria-busy="true">Loading…</p>
+    </template>
+    <template data-component="state-empty">
+      <p class="muted">No orders yet.</p>
+    </template>
+    <template data-component="state-error">
+      <p role="alert" class="alert">
+        Request failed:
+        <span data-bind="context.statusCode | fallback:'no response'">503</span>.
+        <span data-bind="context.hint">Hint from the action's context.</span>
+      </p>
+    </template>
+
+    <!-- Section 1: a summary built from context fields -->
+    <template data-component="order-summary">
+      <p>
+        <span data-bind="context.count">0</span> orders
+        <span class="badge" data-if="context.hasOpen">some still open</span>
+        <span class="badge" data-if-not="context.hasOpen">all shipped</span>
+      </p>
+    </template>
+
+    <!-- Section 2: a keyed list with two nested lists per row -->
+    <template
+      data-component="order-rows"
+      data-accepts="array"
+      data-item="order"
+      data-index="position"
+      data-key="id"
+    >
+      <li class="order">
+        <header>
+          <strong>#<span data-bind="order.id">100</span></strong>
+          <span data-bind="order.customer">Customer</span>
+          <span data-bind="order.total | currency:EUR">€0.00</span>
+          <span class="badge" data-if="order.shipped">Shipped</span>
+          <button class="ship" data-if-not="order.shipped">Mark shipped</button>
+        </header>
+        <ul class="tags" data-if="order.tags">
+          <template data-accepts="array" data-from="order.tags" data-item="tag">
+            <li data-bind="tag">tag</li>
+          </template>
+        </ul>
+        <ul class="lines">
+          <template data-accepts="array" data-from="order.items" data-item="line" data-key="sku">
+            <li>
+              <span data-bind="line.quantity">1</span> ×
+              <span data-bind="line.name">Line item</span>
+            </li>
+          </template>
+        </ul>
+      </li>
+    </template>
+
+    <!-- Section 3: the same compact list for both region kinds -->
+    <template data-component="order-status" data-accepts="array" data-item="order" data-key="id">
+      <li>
+        <span data-bind="order.customer">Customer</span>:
+        <span data-if="order.shipped">shipped</span><span data-if-not="order.shipped">open</span>
+      </li>
+    </template>
+
+    <!-- Section 4: one page of an envelope response, with its navigation -->
+    <template data-component="catalog-page">
+      <ol class="catalog">
+        <template data-accepts="array" data-from="response.items" data-item="item" data-key="sku">
+          <li>
+            <span data-bind="item.name">Catalog item</span>
+            <span data-bind="item.price | currency:EUR">€0.00</span>
+          </li>
+        </template>
+      </ol>
+      <p>
+        Page <span data-bind="context.page">1</span> of <span data-bind="context.pages">1</span>
+      </p>
+      <button
+        class="previous-page"
+        data-if="context.previousPage"
+        data-bind-data-page="context.previousPage"
+      >
+        Previous
+      </button>
+      <button class="next-page" data-action="loadCatalogPage" data-if="context.nextPage">
+        Next
+      </button>
+    </template>
+
+    <!-- Section 5: the merged infinite list -->
+    <template data-component="catalog-feed">
+      <ol class="feed">
+        <template data-accepts="array" data-from="response.items" data-item="item" data-key="sku">
+          <li data-bind="item.name">Catalog item</li>
+        </template>
+      </ol>
+      <p>
+        Showing <span data-bind="context.shown">0</span> of
+        <span data-bind="context.total">0</span>
+      </p>
+      <button class="load-more" data-action="loadCatalogFeed" data-if="context.nextPage">
+        Load more
+      </button>
+      <p class="muted" data-if-not="context.nextPage">That's everything.</p>
+    </template>
+
+    <!-- Section 6: bindings plus a slot for page markup -->
+    <template data-component="note-card">
+      <article class="note">
+        <h3 data-bind="title">Preview title</h3>
+        <slot name="body">Preview body</slot>
+        <footer>By <span data-bind="author">someone</span></footer>
+      </article>
+    </template>
+  </body>
+</html>

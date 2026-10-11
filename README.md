@@ -15,12 +15,16 @@ runtime still only need Node.js 22 or newer to build.
 
 ```sh
 vp install        # or: npm install
-npm run dev
+npm run serve-examples
 ```
 
 The server prints its URLs on start:
 
 - http://127.0.0.1:4173/examples/vanilla/index.html: the runtime shop.
+- http://127.0.0.1:4173/examples/runtime/index.html: the runtime gallery, a reference for
+  `<render-template>`: every state (pending, success, no content, HTTP error, timeout),
+  keyed lists with nested templates, `subscribe-to-action` vs `load-from-action`, both
+  pagination modes and a direct template with `.data`, using only the standalone file.
 - http://127.0.0.1:4173/examples/builder/index.html: static component expansion.
 - http://127.0.0.1:4173/examples/playground/index.html: a manual test page with one
   scenario per runtime behavior, its steps and expected result, live server request

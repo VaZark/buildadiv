@@ -6,7 +6,7 @@ import { currency, upper } from '../../packages/shared/filters.js';
 const config: SiteOptions = {
   root: '.',
   outDir: '../site-output',
-  // Served by `npm run dev` under this path rather than at the site root.
+  // Served by `npm run serve-examples` under this path rather than at the site root.
   base: '/examples/site-output/',
   project: 'shop',
   data: { site: { title: 'Vanilla shop' }, featured: { name: 'Scarf', price: 25 } },

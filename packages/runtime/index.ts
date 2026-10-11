@@ -25,6 +25,8 @@ export type {
 } from './types.js';
 
 export { HttpMethod } from './types.js';
+/** The `<render-template>` element class, for typing `.data` assignments and queries. */
+export type { RenderTemplate } from './dom/element.js';
 import { settings, registerActions } from './configuration/settings.js';
 import { RenderTemplate } from './dom/element.js';
 

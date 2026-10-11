@@ -15,7 +15,7 @@ How data gets from an API onto the page: actions fetch it, `<render-template>` p
 | **Template** | The shape of the data it binds, and the slots it offers | Where data comes from |
 | **`data-action` element** | Which function to call | Anything about data |
 
-For choosing between bindings, slots, `<render-template>` and component tags, see [01 · When to use what](01-templates.md#when-to-use-what).
+For choosing between bindings, slots, `<render-template>` and component tags, see [01 · When to use what](01-templates.md#when-to-use-what). For working examples of every pattern below, run `npm run serve-examples` and open the runtime gallery, `examples/runtime/`.
 
 ## `<render-template>`
 

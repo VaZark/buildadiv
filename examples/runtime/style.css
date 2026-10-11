@@ -1,0 +1,52 @@
+/* Ordinary global CSS: the runtime adds no classes or scope attributes to style against. */
+body {
+  max-width: 60rem;
+  margin: 2rem auto;
+  padding: 0 1rem;
+  font: 1rem/1.6 system-ui;
+  color: #24313a;
+}
+section {
+  border-top: 1px solid #ccd5dd;
+  margin-top: 2rem;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: 1rem;
+}
+.panel,
+.note {
+  border: 1px solid #ccd5dd;
+  border-radius: 0.5rem;
+  padding: 0 1rem 1rem;
+}
+.muted {
+  color: #6b7a86;
+}
+.alert {
+  color: #9b1c1c;
+}
+.badge {
+  display: inline-block;
+  padding: 0 0.5rem;
+  border-radius: 1rem;
+  background: #eef2f5;
+  font-size: 0.85rem;
+}
+.orders > li {
+  margin-bottom: 1rem;
+}
+.tags {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0;
+  list-style: none;
+}
+.tags li::before {
+  content: '#';
+}
+button {
+  padding: 0.35rem 0.7rem;
+  cursor: pointer;
+}

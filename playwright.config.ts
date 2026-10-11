@@ -1,5 +1,5 @@
 import { defineConfig } from '@playwright/test';
-// A separate port lets the suite run while `npm run dev` serves 4173.
+// A separate port lets the suite run while `npm run serve-examples` serves 4173.
 const port = Number(process.env.TEST_PORT) || 4174;
 export default defineConfig({
   testDir: './tests/browser',

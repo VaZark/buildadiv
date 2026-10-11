@@ -107,7 +107,7 @@ What was decided, grouped by topic, and what each decision replaced. When a deci
 | Site builds run in Node with the DOM-based builder and jsdom (browser HTML parsing rules); `buildSite` and a `buildadiv build --config` CLI write pages and per-page bundles | A text-only builder; builds only inside a browser |
 | `buildSite` separates `base` (URL where the output is served) from `assets` (bundle folder in the output) | One asset path used as both URL and output folder |
 | The runtime also ships as one standalone minified ES module, `dist/lib/buildadiv-runtime.min.js` (packed by `vp pack`), with bundled typings | Copying `dist/packages/runtime` and `dist/packages/shared` together |
-| Browser tests serve on port 4174 (`TEST_PORT`), separate from `npm run dev` on 4173 (`PORT`) | Both fixed to 4173 |
+| Browser tests serve on port 4174 (`TEST_PORT`), separate from `npm run serve-examples` on 4173 (`PORT`) | Both fixed to 4173 |
 | Infinite providers share a sequence; explicit arguments select pages; exported `mergeInfinite` / `mergePages` defaults and `items` enable envelope responses | Unspecified pagination call / viewport integration |
 
 ## Initial static expansion

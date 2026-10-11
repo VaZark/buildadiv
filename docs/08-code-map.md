@@ -91,6 +91,9 @@ blocks are preserved; the first stage does not bundle assets or provide an edito
 - `examples/site/`: a site built by the CLI (`npm run build:site`) into `dist/examples/site-output/`;
   its pages load only the standalone runtime file.
 - `examples/vanilla/`: live runtime shop; all HTTP actions stay in `api/`.
+- `examples/runtime/`: the `<render-template>` gallery (states, lists, nested templates,
+  subscribe vs load-once, pagination, direct `.data`) on the standalone runtime file;
+  `tests/browser/runtime/gallery.spec.ts` walks every section.
 - `examples/builder/`: static composition source and sandboxed output preview.
 - `examples/playground/`: manual scenarios for runtime behaviors; `tests/browser/runtime/playground.spec.ts`
   walks the same steps so the page's instructions stay accurate.
@@ -99,7 +102,7 @@ blocks are preserved; the first stage does not bundle assets or provide an edito
   only `packages/*/node/` adapters import Node built-ins or `vite-plus`.
 - `vite.config.ts`: Oxfmt and Oxlint settings for `vp fmt` / `vp lint`.
 
-Browser cases run on port 4174 (`TEST_PORT`), so `npm run dev` can keep 4173 (`PORT`).
+Browser cases run on port 4174 (`TEST_PORT`), so `npm run serve-examples` can keep 4173 (`PORT`).
 They run with one worker because they share the demo API's mutable state.
 Each runtime case resets that state. This makes request-count assertions deterministic.
 
@@ -115,7 +118,7 @@ Each runtime case resets that state. This makes request-count assertions determi
 | `npm run format`                | Oxfmt rewrite of maintained sources                                     |
 | `npm run format:check`          | Consistent formatting without edits                                     |
 | `npm run check`                 | One clean build, architecture checks, format, lint and both test layers |
-| `npm run dev`                   | Compile and serve both example websites                                 |
+| `npm run serve-examples`        | Compile and serve both example websites                                 |
 
 Formatting and lint settings live in `vite.config.ts` and run through Vite+ (`vp fmt`,
 `vp lint`). `vp env` selects the Node.js and npm versions pinned in `devEngines`.
