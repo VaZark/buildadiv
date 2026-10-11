@@ -50,7 +50,8 @@ The one runtime element for **placing** components in the browser, with or witho
 - **A state with no template does nothing.** There are no system defaults: the element keeps whatever it shows.
 - Any number of elements can share an action, each with its own templates (e.g. a full list in one place and a count badge in another), from a single fetch.
 - Only `subscribe-to-action` elements count as **mounted** for the tag registry and cache ([03](03-data-layer.md#tag-registry)).
-- It applies bindings, attribute bindings, filters, slot filling, scope attributes and `data-if` hiding to what it renders.
+- It applies bindings, attribute bindings, filters, slot filling and `data-if` hiding to what it renders.
+- **It renders only templates already in the page.** It loads nothing and adds no styling hooks or scope attributes, so a standalone page can use any global CSS: a design system like Bootstrap, utility classes like Tailwind, or its own stylesheet. Components (template + CSS + JS, with scoped styles) are the builder's concept ([04](04-builder-and-editor.md#component-files)); in a built page, runtime-rendered component templates arrive with their scope already written in.
 - It's a plain custom element: no shadow DOM, no framework.
 
 ## Actions
@@ -280,42 +281,13 @@ nonpaginated providers cache distinct JSON-serializable arguments separately.
 The exported default `mergeInfinite` concatenates arrays and `mergePages` replaces
 the response; use `merge` for envelopes. Infinite array rows carry page markers
 for viewport tracking. Envelope-based lists use the provider's `items` function
-for page markers. Styles are ordinary linked CSS with explicit `[data-c]` selectors;
-the runtime adds scope attributes and never rewrites CSS.
-
-## Component files
-
-A `<render-template>` can render components that live in the `components/` folder
-instead of in the page. Configure where they are, once:
-
-```js
-import { configure } from '../runtime/index.js';
-import { componentFolder } from '../runtime/components.js';
-
-configure({ components: componentFolder('/components/') });
-```
-
-- When a `<render-template>` names a template the page doesn't declare, the runtime
-  loads `components/<name>/<name>.html` and, when they exist beside it, `<name>.css`
-  (added as a `<style>`, scoped with the same rules the build uses) and `<name>.js`
-  (imported) ([01](01-templates.md#component-folder)), then renders. The template is
-  added to the page, so every later use renders immediately.
-- Each component loads once, however many elements use it. Its style is in place and
-  its behavior imported before the first render.
-- A template already in the page (inline, or shipped by the build) is used as is; in a
-  built site that component's CSS and JS are already in the page bundle.
-- `components` is a function `(name) => Promise<{ url, html, style?, script? } | undefined>`;
-  `componentFolder(base)` is the default implementation. It finds the optional files
-  with `HEAD` requests, so a component without them costs a 404 each; built sites
-  avoid that entirely. Without `components`, only templates declared in the page
-  render, and an unknown name is reported as an error.
-- A missing template file (404) is an unknown template. A failing stylesheet or
-  behavior module is reported, and the component still renders.
+for page markers. Styling is entirely the page's: the runtime adds no attributes or
+classes of its own beyond list keys and page markers, and never touches CSS.
 
 ## Standalone runtime file
 
 `npm run build` also packs the whole public runtime (every export of `index`, `action`,
-`cache`, `formats`, `stores`, `filters` and `components`, with the shared code they use)
+`cache`, `formats`, `stores` and `filters`, with the shared code they use)
 into one minified ES module, `dist/lib/buildadiv-runtime.min.js`, with typings in
 `buildadiv-runtime.min.d.ts`. Copy that one file to any site:
 

@@ -5,11 +5,12 @@ import { collectDefinitions } from './definitions.js';
 import { expandComponents } from './expansion.js';
 import { removeStaticDefinitions, runtimeTemplateNames } from './pruning.js';
 import { loadComponents } from './loading.js';
+import { scopeShippedTemplates } from './scoping.js';
 
 /**
  * Compile one page and record which components it uses. Component tags are
  * expanded; definitions the runtime still renders are kept (external ones are
- * added to the page) and the rest are dropped. Component stylesheets and
+ * added to the page) with their `data-c` scope written in, and the rest are dropped. Component stylesheets and
  * behavior modules are never linked individually: they are reported in
  * `components` for the page bundle or the site's global build.
  */
@@ -40,6 +41,7 @@ function compilePage(
       (document.body ?? document.documentElement).append(document.importNode(template, true));
   }
   removeStaticDefinitions(document);
+  scopeShippedTemplates(document);
 
   const usage: ComponentUsage[] = [];
   for (const name of new Set([...used, ...runtime])) {

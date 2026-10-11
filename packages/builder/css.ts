@@ -1,8 +1,8 @@
 /**
  * Component CSS is written plainly (`.card { … }`) and scoped to the component's
- * own elements through the `data-c` attribute both the build and the runtime add:
- * `.card` → `.card[data-c="product-card"]`. The build's bundler and the runtime use
- * this one implementation, so a component looks the same either way.
+ * own elements through the `data-c` attribute the build adds (to expanded tags and
+ * to shipped runtime templates): `.card` → `.card[data-c="product-card"]`. The
+ * runtime knows nothing about components; scoping is entirely the build's.
  *
  * Only the last compound of each selector is scoped, as in Vue's scoped styles:
  * ancestors may be page elements, the styled element is the component's. Rules in

@@ -49,6 +49,10 @@ test('buildPage renders folder components and reports the files beside each temp
         doc.querySelectorAll<HTMLTemplateElement>('template[data-component]'),
         (template) => template.dataset.component,
       ),
+      // The runtime adds no scope, so the shipped component template carries it already.
+      shippedScope: doc
+        .querySelector<HTMLTemplateElement>('template[data-component="status-badge"]')!
+        .content.querySelector<HTMLElement>('.badge')!.dataset.c,
       // Without bundling the page keeps only its own links.
       links: Array.from(doc.querySelectorAll('link'), (link) => link.getAttribute('href')),
       scripts: doc.querySelectorAll('script').length,
@@ -64,6 +68,7 @@ test('buildPage renders folder components and reports the files beside each temp
     tags: 0,
     // Rendered at build time, so not shipped; the runtime-rendered badge is shipped.
     shipped: ['status-badge'],
+    shippedScope: 'status-badge',
     links: ['/site.css'],
     scripts: 0,
     unknown: 'Keep me',

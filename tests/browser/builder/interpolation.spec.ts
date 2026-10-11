@@ -62,9 +62,15 @@ test('runtime declarations, hosts, comments and script/style contents remain unp
     const original = parseHtml(source),
       built = parseHtml(output);
     return {
+      // Unevaluated and unexpanded; the only change is the component scope the build adds.
       runtime:
         original.querySelector('template[data-component="runtime-list"]')!.outerHTML ===
-        built.querySelector('template[data-component="runtime-list"]')!.outerHTML,
+        built
+          .querySelector('template[data-component="runtime-list"]')!
+          .outerHTML.replaceAll(' data-c="runtime-list"', ''),
+      scoped: built
+        .querySelector<HTMLTemplateElement>('template[data-component="runtime-list"]')!
+        .content.querySelector<HTMLElement>('b')!.dataset.c,
       host:
         original.querySelector('render-template')!.outerHTML ===
         built.querySelector('render-template')!.outerHTML,
@@ -79,6 +85,7 @@ test('runtime declarations, hosts, comments and script/style contents remain unp
   });
   expect(result).toEqual({
     runtime: true,
+    scoped: 'runtime-list',
     host: true,
     script: true,
     style: true,

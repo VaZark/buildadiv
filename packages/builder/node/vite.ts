@@ -1,8 +1,8 @@
 import { resolve, sep } from 'node:path';
 import { build } from 'vite-plus';
 import type { Bundler, BundleOutput } from '../contracts.js';
-import { scopeCss } from '../../shared/css.js';
-import { isComponentName } from '../../shared/components.js';
+import { scopeCss } from '../css.js';
+import { isComponentName } from '../components.js';
 
 export interface ViteBundlerOptions {
   /** The site directory that root-relative component URLs (`/components/…`) resolve against. */

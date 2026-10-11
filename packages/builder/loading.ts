@@ -1,4 +1,4 @@
-import type { ComponentFile, ComponentLoader } from '../shared/components.js';
+import type { ComponentFile, ComponentLoader } from './components.js';
 import type { DomRoot } from '../shared/types.js';
 import { referencedTemplates } from '../shared/references.js';
 import { isStaticComponentName } from './definitions.js';

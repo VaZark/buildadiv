@@ -162,8 +162,10 @@ Names must be file-safe (`[\w.-]`).
 
 **Bundling** uses Vite+ (`viteBundler`): Rolldown bundles each component's JS
 (including modules it imports) and Lightning CSS minifies the CSS. Before that, every
-stylesheet is scoped to its component with the shared `scopeCss`, the same function
-the runtime uses ([01](01-templates.md#css-and-js)). Styles come before scripts, each
+stylesheet is scoped to its component with `scopeCss` ([01](01-templates.md#css-and-js)).
+The runtime knows nothing about this: component templates the build ships for
+`<render-template>` get their `data-c` scope written into their markup, so the copies
+the runtime renders match the scoped CSS. Styles come before scripts, each
 in first-use order, so the cascade follows component use. Only root-relative files
 inside `root` are bundled.
 

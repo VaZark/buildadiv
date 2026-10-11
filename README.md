@@ -69,11 +69,9 @@ const renameProduct = mutation<{ id: number; name: string }, Product>({
 });
 ```
 
-Components can also live in `components/<name>/<name>.html`, declaring their own
-optional stylesheet and behavior module. Configure the folder with
-`configure({ components: componentFolder('/components/') })` (from
-`./runtime/components.js`); a `<render-template>` then loads the component, its CSS
-and its JS once, before the first render. See [component files](docs/02-rendering-and-actions.md#component-files).
+`<render-template>` renders only templates already in the page and adds no styling
+hooks, so a standalone page can use any global CSS (Bootstrap, Tailwind, your own).
+Components with their own scoped CSS and JS are a builder feature (below).
 
 For direct rendering, use `template="greeting"` and assign the element's `.data`
 property. Preview content remains until data is supplied. Actions return

@@ -1,7 +1,7 @@
 import { access, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import type { ComponentLoader } from '../../shared/components.js';
-import { isComponentName } from '../../shared/components.js';
+import type { ComponentLoader } from '../components.js';
+import { isComponentName } from '../components.js';
 
 /** Whether a file exists, without throwing for the usual missing optional file. */
 async function exists(path: string): Promise<boolean> {

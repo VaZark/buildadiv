@@ -2,14 +2,15 @@ import { test, expect } from '@playwright/test';
 import type { RenderTemplate } from '../../../packages/runtime/dom/element.js';
 import { setup, mount } from '../../support/browser.js';
 
-test('native imports render slots, scoped bindings and share one fetch', async ({
+test('native imports render slots, item bindings and share one fetch', async ({
   page,
   request,
 }) => {
   const errors = await setup(page, request);
   await expect(page.locator('#layout h2')).toHaveText('Products');
   await expect(page.locator('#layout h2')).not.toHaveAttribute('slot');
-  await expect(page.locator('#products li').first()).toHaveAttribute('data-c', 'product-rows');
+  // The runtime adds no component scope; pages style rendered templates with their own CSS.
+  await expect(page.locator('#products li').first()).not.toHaveAttribute('data-c');
   await expect(page.locator('#products li').first()).toContainText('€25.00');
   await expect(page.locator('#count')).toContainText('2 products');
   const calls = await (await request.get('/api/calls')).json();
@@ -114,4 +115,22 @@ test('preview content clears for missing data and unsafe attribute bindings are 
   await expect(page.locator('#safe button')).not.toHaveAttribute('onclick');
   await expect(page.locator('#safe p').nth(1)).toHaveText('a|b:c');
   expect(errors).toEqual([]);
+});
+
+test('render-template renders only templates in the page and loads nothing', async ({
+  page,
+  request,
+}) => {
+  const errors = await setup(page, request);
+  const requested: string[] = [];
+  page.on('request', (sent) => requested.push(new URL(sent.url()).pathname));
+  await page.evaluate(() =>
+    document.body.insertAdjacentHTML(
+      'beforeend',
+      '<render-template id="absent" template="not-in-page"></render-template>',
+    ),
+  );
+  await expect.poll(() => errors).toContain('Unknown template: not-in-page');
+  await expect(page.locator('#absent')).toBeEmpty();
+  expect(requested).toEqual([]);
 });

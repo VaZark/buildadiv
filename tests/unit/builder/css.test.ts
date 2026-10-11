@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { scopeCss } from '../../../packages/shared/css.js';
+import { scopeCss } from '../../../packages/builder/css.js';
 
 const scope = (css: string) => scopeCss(css, 'product-card');
 

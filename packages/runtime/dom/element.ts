@@ -7,8 +7,7 @@ import { settings } from '../configuration/settings.js';
 import { TemplateRenderer } from './bindings.js';
 import { subscribe, refreshPage } from '../data/queries.js';
 import { stateOf, resultFor } from '../actions/results.js';
-import { emit, reportFailure } from '../events.js';
-import { ensureTemplate, findTemplate } from './components.js';
+import { emit } from '../events.js';
 
 /** A light-DOM host connects action states to templates without owning requests. */
 export class RenderTemplate extends HTMLElement {
@@ -21,7 +20,6 @@ export class RenderTemplate extends HTMLElement {
   private generation = 0;
   private action?: RegisteredAction;
   private renderer?: TemplateRenderer;
-  private renderRequests = 0;
   static observedAttributes = [
     ...templateReferenceAttributes,
     'load-from-action',
@@ -111,20 +109,14 @@ export class RenderTemplate extends HTMLElement {
   }
   /**
    * Update mapped states and observe page rows for lazy infinite-query refreshes.
-   * A template missing from the page is loaded from its component folder first;
-   * only the most recent render request is applied once loading finishes.
+   * Only templates already in the page render: the element loads nothing and adds
+   * no styling hooks, so pages can use any global CSS (a design system, utilities).
    */
   render(name: string, data: unknown, preview = false, entry?: CacheEntry): void {
-    const request = ++this.renderRequests;
-    const template = findTemplate(name);
-    if (!template) {
-      ensureTemplate(name).then((loaded) => {
-        if (request !== this.renderRequests || !this.isConnected) return;
-        if (loaded) this.render(name, data, preview, entry);
-        else reportFailure(new Error(`Unknown template: ${name}`));
-      }, reportFailure);
-      return;
-    }
+    const template = Array.from(
+      document.querySelectorAll<HTMLTemplateElement>('template[data-component]'),
+    ).find((candidate) => candidate.dataset.component === name);
+    if (!template) throw new Error(`Unknown template: ${name}`);
     if (this.action) emit(this.action, 'before:render', { result: data, element: this });
     if (this.renderer?.template !== template) {
       this.observer?.disconnect();

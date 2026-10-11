@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { componentFolder } from '../../../packages/shared/components.js';
+import { componentFolder } from '../../../packages/builder/components.js';
 
 test('component folders map names to files, detect optional assets, and cannot escape', async () => {
   const requested: string[] = [];

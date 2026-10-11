@@ -42,7 +42,7 @@ button {
   padding: 0.4rem 0.7rem;
   cursor: pointer;
 }
-.muted[data-c='loading'] {
+.muted {
   color: #6b7a86;
 }
 #event-log {

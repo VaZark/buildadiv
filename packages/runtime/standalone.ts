@@ -7,4 +7,3 @@ export * from './cache.js';
 export * from './formats.js';
 export * from './stores.js';
 export * from './filters.js';
-export * from './components.js';

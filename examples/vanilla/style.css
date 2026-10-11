@@ -5,12 +5,12 @@ body {
   font: 1rem/1.6 system-ui;
   color: #24313a;
 }
-.panel[data-c='panel'] {
+.panel {
   border: 1px solid #ccd5dd;
   padding: 1rem;
   border-radius: 0.5rem;
 }
-li[data-c='product-rows'] {
+#products li {
   margin: 0.75rem 0;
 }
 button {

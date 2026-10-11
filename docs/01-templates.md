@@ -17,7 +17,8 @@ components/product-card/
 ```
 
 - **Convention, not declaration.** The HTML file holds only the template. Whichever of `<name>.css` and `<name>.js` exists beside it is picked up when the component is used; nothing links them by hand.
-- **Wherever the component is used, its files come with it.** In a built site, the build detects each component a page uses (as a tag or through a `<render-template>`) and puts its CSS and JS into that page's single minified bundle ([04](04-builder-and-editor.md#component-files)). On a runtime-only page, a `<render-template>` loads them before the first render ([02](02-rendering-and-actions.md#component-files)). Each file loads once per page.
+- **Wherever the component is used, its files come with it.** In a built site, the build detects each component a page uses (as a tag or through a `<render-template>`) and puts its CSS and JS into that page's single minified bundle ([04](04-builder-and-editor.md#component-files)).
+- **Components are a builder concept.** The runtime's `<render-template>` only renders templates already in the page and loads nothing; a page used without the builder writes its templates inline and styles them with any global CSS ([02](02-rendering-and-actions.md#render-template)).
 
 ## Template
 
@@ -245,7 +246,7 @@ Show or hide an element based on **truthiness of paths**, and nothing more.
 
 ## CSS and JS
 
-- **Scoped CSS by attribute, not hashing.** The component's elements carry `data-c="product-card"` (added by the build for component tags, and by `<render-template>` at runtime). Write plain selectors in `product-card.css`; the bundler and the runtime scope them the same way, on each selector's last compound: `.card` → `.card[data-c="product-card"]`, `.card .title::before` → `.card .title[data-c="product-card"]::before`. Rules inside `@media`, `@supports`, `@container` and `@layer` are scoped; `@keyframes` and `@font-face` are not; a selector that already mentions `[data-c` is left as written. Class names stay exactly as written.
+- **Scoped CSS by attribute, not hashing.** The component's elements carry `data-c="product-card"`, added by the build: to markup expanded from component tags, and written into component templates it ships for the runtime, so runtime-rendered copies carry it too. Write plain selectors in `product-card.css`; the bundler scopes them on each selector's last compound: `.card` → `.card[data-c="product-card"]`, `.card .title::before` → `.card .title[data-c="product-card"]::before`. Rules inside `@media`, `@supports`, `@container` and `@layer` are scoped; `@keyframes` and `@font-face` are not; a selector that already mentions `[data-c` is left as written. Class names stay exactly as written.
 - **Global CSS** lives in `styles/global/`: tokens (custom properties), resets, typography, layout. Only for things that are clearly global.
 - Component CSS comes after the page's own styles, so it can override global rules.
-- **Component JS** (`product-card.js`) is an ordinary ES module holding behavior for one component. It runs **once** per page (bundled into the page's script, or imported before the first runtime render) and typically attaches delegated listeners scoped by `[data-c="product-card"]`. It may import its own helper modules; the bundler includes them. It **never fetches data**; that's what actions are for.
+- **Component JS** (`product-card.js`) is an ordinary ES module holding behavior for one component. It runs **once** per page, bundled into the page's script, and typically attaches delegated listeners scoped by `[data-c="product-card"]`. It may import its own helper modules; the bundler includes them. It **never fetches data**; that's what actions are for.

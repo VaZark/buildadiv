@@ -58,22 +58,10 @@ function bindElement(element: HTMLElement, data: unknown): void {
     );
   }
 }
-/** Mark component-owned markup for ordinary CSS without entering nested runtime hosts. */
-function scopeTree(root: ElementContainer, component: string): void {
-  for (const element of root.children || []) {
-    element.setAttribute('data-c', component);
-    if (element.localName !== 'render-template') {
-      if (element.localName === 'template')
-        scopeTree((element as HTMLTemplateElement).content, component);
-      else scopeTree(element, component);
-    }
-  }
-}
 /** Nested lists own their item scope; skip their generated nodes in the outer binder. */
 function bindTree(
   root: ElementContainer,
   data: unknown,
-  component: string | undefined,
   preview: boolean,
   owner: TemplateRenderer,
 ): void {
@@ -85,19 +73,14 @@ function bindTree(
       if (!renderer) {
         const end = element.ownerDocument.createComment('list');
         element.after(end);
-        renderer = new TemplateRenderer(
-          element as HTMLTemplateElement,
-          element.parentNode!,
-          end,
-          component,
-        );
+        renderer = new TemplateRenderer(element as HTMLTemplateElement, element.parentNode!, end);
         nestedLists.set(element as HTMLTemplateElement, renderer);
       }
       renderer.update(data, [], false);
       continue;
     }
     if (!preview) bindElement(element as HTMLElement, data);
-    if (element.localName !== 'render-template') bindTree(element, data, component, preview, owner);
+    if (element.localName !== 'render-template') bindTree(element, data, preview, owner);
   }
 }
 
@@ -108,7 +91,6 @@ export class TemplateRenderer {
     public template: HTMLTemplateElement,
     public parent: Node,
     public before: ChildNode | null = null,
-    public component = template.dataset.component,
   ) {
     this.records = new Map<unknown, RenderRecord>();
   }
@@ -143,7 +125,6 @@ export class TemplateRenderer {
       let record = this.records.get(key);
       if (!record) {
         const fragment = template.content.cloneNode(true) as DocumentFragment;
-        if (this.component) scopeTree(fragment, this.component);
         fillSlots(fragment, children);
         // Bound nested lists may insert siblings: boundary comments include them in ownership.
         const start = template.ownerDocument.createComment('item');
@@ -193,7 +174,7 @@ export class TemplateRenderer {
           if (pageIndex >= 0) setAttribute(root, 'data-page-index', String(pageIndex));
         }
       }
-      bindTree({ children: roots }, scope, this.component, preview, this);
+      bindTree({ children: roots }, scope, preview, this);
       record.nodes = this.range(record);
     }
     this.records = next;

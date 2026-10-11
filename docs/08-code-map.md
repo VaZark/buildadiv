@@ -6,12 +6,12 @@ tests. Generated `dist/` files are build output; review the TypeScript source.
 
 ## Package boundaries
 
-| Package   | Responsibility                                                                                       | Allowed package dependencies   |
-| --------- | ---------------------------------------------------------------------------------------------------- | ------------------------------ |
-| `shared`  | Paths, pipelines, filters, slots, sanitization, template references, component files and CSS scoping | None                           |
-| `runtime` | Client-side rendering and HTTP data lifecycle                                                        | `shared`                       |
-| `builder` | Static HTML parsing, component expansion, page bundles and the Node site build                       | `shared`                       |
-| `editor`  | Planned browser editor                                                                               | `shared`, `runtime`, `builder` |
+| Package   | Responsibility                                                                               | Allowed package dependencies   |
+| --------- | -------------------------------------------------------------------------------------------- | ------------------------------ |
+| `shared`  | Paths, pipelines, filters, slots, sanitization and template references                       | None                           |
+| `runtime` | Client-side rendering and HTTP data lifecycle                                                | `shared`                       |
+| `builder` | Static HTML parsing, components (folders, CSS scoping), page bundles and the Node site build | `shared`                       |
+| `editor`  | Planned browser editor                                                                       | `shared`, `runtime`, `builder` |
 
 `npm run validate:architecture` checks these boundaries, native relative `.js`
 specifiers, and acyclic value imports. Type-only references may cross domains.
@@ -39,7 +39,6 @@ use the emitted `.js` paths. Internal modules import domain contracts directly.
 | `data/tags.ts`, `keys.ts`                                | Invalidation, reconciliation and id matching              | Runtime unit `tags.test.ts`; browser action/rendering tests             |
 | `dom/bindings.ts`, `element.ts`                          | Keyed nodes, bindings, slots and state templates          | Browser `runtime/rendering.spec.ts`                                     |
 | `dom/triggers.ts`, `configuration/settings.ts`           | Declarative triggers and named module registration        | Browser `runtime/actions.spec.ts`                                       |
-| `dom/components.ts`, root `components.ts`                | Loading component folders: template, scoped CSS, behavior | Browser `runtime/components.spec.ts`; unit `shared/components.test.ts`  |
 | `standalone.ts`                                          | Single-file distribution entry (`vp pack`)                | Browser `builder/site.spec.ts` (the page loads only the packed file)    |
 
 Read the data path in this order:
@@ -67,6 +66,9 @@ stays acyclic even though requests can cause mounted queries to refetch.
 | `loading.ts`                  | Finding and loading the component files a page uses     | `builder/files.spec.ts`                                     |
 | `usage.ts`                    | Merging page component usage for the global build       | `builder/files.spec.ts`                                     |
 | `bundling.ts`                 | Page bundle names, bundler call and bundle links        | `builder/files.spec.ts`                                     |
+| `components.ts`               | Component folder convention over HTTP                   | Unit `builder/components.test.ts`                           |
+| `css.ts`                      | Scoping plain component CSS to `[data-c]`               | Unit `builder/css.test.ts`                                  |
+| `scoping.ts`                  | Writing `data-c` into shipped runtime templates         | `builder/files.spec.ts`, `builder/interpolation.spec.ts`    |
 | `node/vite.ts`                | Node-only Vite+ bundler: scopes, bundles, minifies      | Unit `builder/vite.test.ts`                                 |
 | `node/folder.ts`              | Component folders on disk                               | Unit `builder/site.test.ts`                                 |
 | `node/dom.ts`                 | jsdom parsing for Node builds                           | Unit `builder/site.test.ts`                                 |
@@ -79,6 +81,7 @@ blocks are preserved; the first stage does not bundle assets or provide an edito
 ## Tests, examples and tooling
 
 - `tests/unit/shared/`: paths, filter pipelines and filters.
+- `tests/unit/builder/`: component folders, CSS scoping, the Vite+ bundler, `buildSite` and the CLI.
 - `tests/unit/runtime/`: contracts, request outcomes, queries, tags, policies,
   formats, persistence and pagination.
 - `tests/contracts/`: compile-only positive/negative TypeScript API checks.

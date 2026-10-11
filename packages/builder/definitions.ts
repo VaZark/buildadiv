@@ -1,6 +1,6 @@
-import type { ComponentFile } from '../shared/components.js';
+import type { ComponentFile } from './components.js';
 import type { DomRoot } from '../shared/types.js';
-import { componentTemplates } from '../shared/components.js';
+import { componentTemplates } from './components.js';
 import { parseHtml } from './html.js';
 
 /** Only hyphenated names are static component tags; single-word names stay runtime declarations. */

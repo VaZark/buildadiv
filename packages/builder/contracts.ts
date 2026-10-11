@@ -1,4 +1,4 @@
-import type { ComponentFile, ComponentLoader } from '../shared/components.js';
+import type { ComponentFile, ComponentLoader } from './components.js';
 import type { DomRoot, FilterRegistry } from '../shared/types.js';
 
 export interface ExpansionOptions {
