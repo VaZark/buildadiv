@@ -1,0 +1,99 @@
+# 08 · Code map and validation
+
+The specs describe behavior; this page locates its implementation and verification.
+Start with contracts, follow the request or rendering flow, then read the corresponding
+tests. Generated `dist/` files are build output; review the TypeScript source.
+
+## Package boundaries
+
+| Package   | Responsibility                                              | Allowed package dependencies   |
+| --------- | ----------------------------------------------------------- | ------------------------------ |
+| `shared`  | Paths, pipelines, filters, slots and attribute sanitization | None                           |
+| `runtime` | Client-side rendering and HTTP data lifecycle               | `shared`                       |
+| `builder` | Static HTML parsing and component expansion                 | `shared`                       |
+| `editor`  | Planned browser editor                                      | `shared`, `runtime`, `builder` |
+
+`npm run validate:architecture` checks these boundaries, native relative `.js`
+specifiers, and acyclic value imports. Type-only references may cross domains.
+It also prevents explicit `any` and disabled type checks in library source. This
+validates code organization; it does not implement the future template linter.
+
+## Runtime
+
+Documented public modules (`index.ts`, `action.ts`, `cache.ts`, `formats.ts`,
+`stores.ts`, `filters.ts`, `types.ts`) remain at the package root. Browser imports
+use the emitted `.js` paths. Internal modules import domain contracts directly.
+
+| Folder / module                                          | Review for                                                | Validation                                                              |
+| -------------------------------------------------------- | --------------------------------------------------------- | ----------------------------------------------------------------------- |
+| `contracts/http.ts`                                      | Methods and request formats                               | `tests/contracts/actions.ts`                                            |
+| `contracts/actions.ts`                                   | Role interfaces, forbidden fields and callable APIs       | `tests/contracts/actions.ts`                                            |
+| `contracts/results.ts`                                   | Template state and result shape                           | Runtime unit `actions.test.ts`                                          |
+| `contracts/queries.ts`, `storage.ts`, `configuration.ts` | Cache, persistence and registration contracts             | Type check; runtime unit tests                                          |
+| `actions/factory.ts`, `methods.ts`                       | Helper construction and JavaScript boundary validation    | Runtime unit `actions.test.ts`; compile-time contracts                  |
+| `actions/request.ts`, `results.ts`                       | Fetch/decoding, state events and failures                 | Runtime unit `actions.test.ts`; browser `runtime/actions.spec.ts`       |
+| `data/entries.ts`, `queries.ts`, `lifetime.ts`           | Shared queries, mounted references and timers             | Runtime unit `queries.test.ts`                                          |
+| `data/policies.ts`                                       | HTTP freshness, argument keys and exported merge defaults | Runtime unit `policies.test.ts`                                         |
+| `data/persistence.ts`, root `stores.ts`                  | Restore/save and browser storage adapters                 | Runtime unit `persistence.test.ts`; browser `runtime/storage.spec.ts`   |
+| `data/pagination.ts`                                     | Page aggregation and tail cursor                          | Runtime unit `pagination.test.ts`; browser `runtime/pagination.spec.ts` |
+| `data/tags.ts`                                           | Invalidation and reconciliation                           | Runtime unit `tags.test.ts`; browser action/rendering tests             |
+| `dom/bindings.ts`, `element.ts`                          | Keyed nodes, bindings, slots and state templates          | Browser `runtime/rendering.spec.ts`                                     |
+| `dom/triggers.ts`, `configuration/settings.ts`           | Declarative triggers and named module registration        | Browser `runtime/actions.spec.ts`                                       |
+
+Read the data path in this order:
+
+1. `actions/factory.ts` applies the typed role and defaults.
+2. `data/queries.ts` deduplicates loads and restores cached state.
+3. `actions/request.ts` fetches, decodes, and publishes a result.
+4. `data/tags.ts` applies successful mutation effects.
+5. `dom/element.ts` maps states to templates; `dom/bindings.ts` updates native nodes.
+
+Request execution, timers and tag effects receive the typed `QueryRefresher`
+callback. They do not import the query coordinator, so the value-import graph
+stays acyclic even though requests can cause mounted queries to refetch.
+
+## Builder
+
+| Module                 | Responsibility                                          | Validation                      |
+| ---------------------- | ------------------------------------------------------- | ------------------------------- |
+| `contracts.ts`         | Expansion and parse/serialize adapters                  | Type check                      |
+| `html.ts`              | Native document parsing/serialization                   | Builder browser tests           |
+| `definitions.ts`       | Template lookup, names and duplicate detection          | `builder/components.spec.ts`    |
+| `interpolation.ts`     | Shared pipeline evaluation into plain strings           | `builder/interpolation.spec.ts` |
+| `expansion.ts`         | In-place replacement, scope ownership, slots and cycles | `builder/components.spec.ts`    |
+| `build.ts`, `index.ts` | String compilation and the public facade                | `builder/example.spec.ts`       |
+
+The builder composes these stages and imports only shared utilities. Runtime
+blocks are preserved; the first stage does not bundle assets or provide an editor.
+
+## Tests, examples and tooling
+
+- `tests/unit/shared/`: paths, filter pipelines and filters.
+- `tests/unit/runtime/`: contracts, request outcomes, queries, tags, policies,
+  formats, persistence and pagination.
+- `tests/contracts/`: compile-only positive/negative TypeScript API checks.
+- `tests/browser/runtime/` and `tests/browser/builder/`: emitted modules on vanilla pages.
+- `tests/support/`: shared fixture helpers, browser globals and the demonstration HTTP server.
+- `examples/vanilla/`: live runtime shop; all HTTP actions stay in `api/`.
+- `examples/builder/`: static composition source and sandboxed output preview.
+- `scripts/build.ts`: copies HTML/CSS next to compiled modules.
+- `scripts/validate-architecture.ts`: validates the documented import graph.
+
+Browser cases run with one worker because they share the demo API's mutable state.
+Each runtime case resets that state. This makes request-count assertions deterministic.
+
+## Commands
+
+| Command                         | Checks / output                                                       |
+| ------------------------------- | --------------------------------------------------------------------- |
+| `npm run typecheck`             | All libraries, examples, fixtures and compile-time contracts          |
+| `npm test`                      | Clean compilation and unit tests                                      |
+| `npm run test:browser`          | Clean compilation and real Chromium integration tests                 |
+| `npm run validate:architecture` | Clean compilation and package/import rules                            |
+| `npm run format:check`          | Consistent formatting without edits                                   |
+| `npm run check`                 | One clean build, architecture checks, both test layers and formatting |
+| `npm run dev`                   | Compile and serve both example websites                               |
+
+Install dependencies with `npm install` and the browser with
+`npx playwright install chromium`. Builds replace only generated `dist/` output,
+preventing moved or deleted modules from surviving as stale JavaScript.

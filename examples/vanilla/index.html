@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Buildadiv · Vanilla shop</title>
+    <link rel="stylesheet" href="./style.css" />
+    <script type="module" src="./main.js"></script>
+  </head>
+  <body>
+    <h1>Vanilla shop</h1>
+    <p>Native browser imports, HTML templates, and ordinary event listeners.</p>
+    <render-template id="layout" template="panel">
+      <h2 slot="heading">Products</h2>
+      <p>The list stays current after mutations.</p>
+    </render-template>
+    <ul id="products">
+      <render-template
+        subscribe-to-action="loadProducts"
+        on-pending="pending"
+        on-success="product-rows"
+        on-error="failure"
+      ></render-template>
+    </ul>
+    <render-template
+      id="count"
+      subscribe-to-action="loadProducts"
+      on-success="count"
+    ></render-template>
+    <button id="rename">Rename scarf</button>
+    <button data-action="importProducts">Import products</button>
+    <template data-component="panel"
+      ><section class="panel">
+        <header><slot name="heading">Heading</slot></header>
+        <slot>Panel content</slot>
+      </section></template
+    >
+    <template
+      data-component="product-rows"
+      data-accepts="array"
+      data-item="product"
+      data-index="i"
+      data-key="id"
+    >
+      <li>
+        <strong data-bind="product.name">Product name</strong>
+        <span data-bind="product.price | currency:EUR">€0.00</span>
+        <span data-if="product.inStock">In stock</span
+        ><span data-if-not="product.inStock">Sold out</span>
+        <button class="local">Local button</button>
+      </li>
+    </template>
+    <template data-component="pending"><p>Loading…</p></template>
+    <template data-component="failure"
+      ><p role="alert">
+        Request failed: <span data-bind="context.statusCode | fallback:'network'">Status</span>
+      </p></template
+    >
+    <template data-component="count"
+      ><p><span data-bind="response.length">0</span> products</p></template
+    >
+  </body>
+</html>

@@ -1,0 +1,29 @@
+{
+  "name": "buildadiv",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "npm run clean && tsc && node dist/scripts/build.js",
+    "typecheck": "tsc --noEmit",
+    "test": "npm run build && npm run test:unit",
+    "test:browser": "npm run build && playwright test",
+    "check": "npm run build && node dist/scripts/validate-architecture.js && npm run test:unit && playwright test && npm run format:check",
+    "dev": "npm run build && node dist/tests/support/server.js",
+    "clean": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\"",
+    "test:unit": "node --test --test-isolation=none dist/tests/unit/**/*.test.js",
+    "validate:architecture": "npm run build && node dist/scripts/validate-architecture.js",
+    "format": "prettier --write packages tests examples scripts playwright.config.ts tsconfig.json package.json .prettierrc.json CONTRIBUTING.md docs/08-code-map.md README.md AGENTS.md",
+    "format:check": "prettier --check packages tests examples scripts playwright.config.ts tsconfig.json package.json .prettierrc.json CONTRIBUTING.md docs/08-code-map.md README.md AGENTS.md"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.56.0",
+    "@types/node": "^26.6.5",
+    "prettier": "^3.9.10",
+    "typescript": "^7.0.2",
+    "typescript-ast": "npm:typescript@^6.0.3"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  }
+}

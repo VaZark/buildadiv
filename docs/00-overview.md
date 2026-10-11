@@ -129,3 +129,11 @@ configure({ filters: { currency } });
 ```
 
 What happens: the element calls `loadProducts`, shows `product-skeleton`, then stamps `product-rows` once per product. When `renameProduct` succeeds, its response is upserted into the cache by `id`, and only that one `<li>` re-renders.
+
+## Source language and browser distribution
+
+All implementation, example modules, and tests use strict TypeScript. The source
+packages compile to JavaScript ES modules plus declarations/source maps under
+`dist/`. Native `.js` import specifiers remain in TypeScript source so the emitted
+files load directly in vanilla websites. Building this repository uses `tsc`;
+consuming its emitted runtime still needs no build step or framework.

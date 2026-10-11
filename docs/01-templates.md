@@ -242,6 +242,6 @@ Show or hide an element based on **truthiness of paths**, and nothing more.
 
 ## CSS and JS
 
-- **Scoped CSS by attribute, not hashing.** The component's elements carry `data-c="product-card"` (added by the build for component tags, and by `<render-template>` at runtime), and its selectors are prefixed: `.card` → `.card[data-c="product-card"]`. Class names stay exactly as written.
+- **Scoped CSS by attribute, not hashing.** The component's elements carry `data-c="product-card"` (added by the build for component tags, and by `<render-template>` at runtime), and its selectors use the scope: `.card` → `.card[data-c="product-card"]`. For standalone runtime pages, write those selectors explicitly and link the CSS normally; rewriting belongs to the builder. Class names stay exactly as written.
 - **Global CSS** lives in `styles/global/`: tokens (custom properties), resets, typography, layout. Only for things that are clearly global.
 - **Component JS** (`component.js`) holds behavior for one component, bundled and minified. It **never fetches data**; that's what actions are for.

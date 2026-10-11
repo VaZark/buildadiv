@@ -111,3 +111,65 @@ api/             # providers and mutations
 
 - **Runtime library:** an ES module, from a CDN `<script type="module">` or a package manager. Tree-shakable.
 - **Builder & editor:** the browser-based editor, plus a CLI build for CI.
+
+## Initial component expansion API
+
+The first builder stage is a native ES module compiled from `packages/builder/index.ts` to `dist/packages/builder/index.js`.
+It works on browser DOM documents or fragments, without importing the runtime.
+`expandComponents(root, { components, data, filters })` modifies a parsed DOM in
+place and returns it. `buildHtml(html, options)` parses a separate document and
+returns static HTML. `parseHtml` and `serializeHtml` are exported defaults; pass
+`parse` and `serialize` functions to `buildHtml` to supply another DOM adapter.
+This stage does not bundle assets or implement the editor or CLI.
+
+Inline `<template data-component="name">` declarations provide definitions.
+`components` optionally supplies additional template elements or HTML strings
+containing declarations. Only names with a hyphen are static component tags;
+single-word runtime template names remain declarations. Duplicate definitions
+are errors, unknown custom elements stay intact, and recursive definition
+composition reports the cycle rather than overflowing the stack.
+
+Component attributes become strings in `props`, available in that component's
+`{{ }}` expressions. Interpolation in an attribute is evaluated in the caller's
+scope before passing the value. Global `data` remains available to each component.
+A nested component gets its own `props`; supplied slot markup evaluates in the
+caller's scope. This resolves the static-values open question using attributes:
+
+```html
+<template data-component="product-card">
+  <article><h2>{{ props.title }}</h2><slot>Card content</slot></article>
+</template>
+<product-card title="{{ product.name | upper }}"><p>{{ site.note }}</p></product-card>
+```
+
+Expansion removes the component tag, inserts all its template roots at that
+position, and adds `data-c` to the component's own elements. It does not transfer
+host classes or ids to arbitrary roots; use explicit `{{ props.class }}` /
+`{{ props.id }}` on the desired element. Slots follow the same shared rules as
+the runtime, including fallback content. Components can compose other components.
+Supplied markup keeps its caller's scope attributes.
+
+`{{ }}` writes text and sanitized attributes; returned strings are never reparsed
+as markup or expressions. Only `fallback` is registered by default. Script/style
+contents, comments, runtime `<template>` declarations and `<render-template>`
+subtrees stay untouched. Templates used as definitions are expanded only through
+their cloned content. Full-document parsing follows the browser's HTML rules
+(including repairs to malformed HTML); custom component tags need explicit
+closing tags. The builder is static composition, not a Jinja server adapter.
+
+## Source organization and review
+
+Each implemented package keeps its documented import paths as small entry points.
+Runtime internals are grouped by responsibility: `contracts/` describes interfaces
+and method/role unions, `actions/` constructs actions and executes requests,
+`data/` owns cached queries and mutation effects, `dom/` renders native nodes and
+handles triggers, and `configuration/` holds explicit registration/settings.
+The builder separates parsing/serialization, definitions, interpolation and
+expansion. Shared utilities remain small, independent modules.
+
+Request execution receives a typed query-refetch function for mutation effects
+and timers. It does not import the query coordinator, keeping value imports
+acyclic. Type-only contract references may cross domains. Tests mirror these
+responsibilities: unit tests for shared/data behavior, compile-time API contracts,
+and browser tests for runtime and builder behavior. See `docs/08-code-map.md` for
+entry points, dependency flow and matching validation commands.

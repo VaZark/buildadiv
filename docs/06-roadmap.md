@@ -57,4 +57,3 @@ There is **no built-in agent**. The project exposes its capabilities over MCP, a
 | Importing React/Vue components into the editor: v1, or v2 alongside MCP porting? What does "comparison" show: original vs port, variants side by side, or both? | Editor |
 | How generated template types are exposed to TypeScript | Linting (v1.1) |
 | Where the MCP server runs, given the editor is browser-only with no required local server: a remote endpoint, or an optional local bridge? | MCP (v2) |
-| How static values reach a component tag at build time (e.g. a product card on a static page): attributes on the tag read with `{{ }}`, or slots only? | Builder |

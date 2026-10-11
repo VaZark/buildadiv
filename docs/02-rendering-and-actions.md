@@ -248,3 +248,50 @@ document.addEventListener('createProduct:error', () => showToast('Could not crea
 
 - `event: 'product-created'` on an action replaces its `functionName` prefix (`product-created:success`, …).
 - The detail carries `{ action, method, args, event, result | error, tags }`, plus `element` for render events.
+
+## Native browser setup
+
+Load the runtime with a normal `<script type="module">`; no bundler or framework is
+required. Import actions from `api/` and register their unique names explicitly:
+
+```js
+import { configure } from '../runtime/index.js';
+import { loadProducts, renameProduct } from './api/products.js';
+configure({ actions: { loadProducts, renameProduct } });
+```
+
+Registration supplies names for helper-created functions, document events, and
+HTML action attributes. It does not put functions on `window`; inline handlers
+require an explicit assignment by the application. Register before requesting
+data. Direct components keep binding preview content until their `.data` property
+is assigned; assigning `.data` renders ordinary data without an action.
+Helper-created actions resolve to `{ response, context }` (including error states).
+Request failures emit events rather than creating unhandled promise rejections.
+Hand-written registered actions may return the same shape and reject on failure.
+For custom trigger events, call `configure` before dispatching the event; delegated
+listeners support elements inserted later. Form submission uses `FormData`, including
+the submitter; a normal JavaScript call passes its argument as the request body.
+
+Pagination calls without arguments load the next page (the first on initial load).
+Explicit arguments select a page. Infinite providers share a page sequence;
+nonpaginated providers cache distinct JSON-serializable arguments separately.
+The exported default `mergeInfinite` concatenates arrays and `mergePages` replaces
+the response; use `merge` for envelopes. Infinite array rows carry page markers
+for viewport tracking. Envelope-based lists use the provider's `items` function
+for page markers. Styles are ordinary linked CSS with explicit `[data-c]` selectors;
+the runtime adds scope attributes but does not fetch or rewrite CSS or component JS.
+
+## TypeScript action roles
+
+The helper contracts use separate `RequestOptions`, `QueryOptions` and
+`WriteOptions` interfaces. Provider/mutation interfaces explicitly forbid opposing
+role fields with `never`, including objects stored in intermediate variables.
+GET providers forbid `send`; QUERY providers allow an encoder. Public method
+types are derived from `HttpMethod`: providers accept GET/QUERY and mutations
+accept standard write methods (default POST). Use the extensible `action()` helper
+for other HTTP extension methods.
+
+`ProviderAction` and `MutationAction` retain their exact role in `.options.kind`;
+`NormalizedActionOptions` is the discriminated union used by execution. Providers
+run the query/cache path, mutations run the write path, and baseline actions use
+their method. Native JavaScript callers still receive boundary validation.

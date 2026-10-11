@@ -1,0 +1,28 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "types": ["node"],
+    "strict": true,
+    "noEmitOnError": true,
+    "declaration": true,
+    "sourceMap": true,
+    "rootDir": ".",
+    "outDir": "dist",
+    "verbatimModuleSyntax": true,
+    "skipLibCheck": true,
+    "paths": {
+      "/packages/*": ["./packages/*"],
+      "/examples/*": ["./examples/*"]
+    }
+  },
+  "include": [
+    "packages/**/*.ts",
+    "examples/**/*.ts",
+    "tests/**/*.ts",
+    "scripts/**/*.ts",
+    "playwright.config.ts"
+  ]
+}

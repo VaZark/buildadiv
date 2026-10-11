@@ -83,7 +83,7 @@ From [02 · Rendering and actions](02-rendering-and-actions.md#render-template).
 | `invalidates` | mutation | none; `'Tag'`, `['A', 'B']`, `{ tag, key }`, `{ tag, id }` | [03](03-data-layer.md#invalidation) |
 | `reconciles` | mutation | none; `{ tag, key }` | [03](03-data-layer.md#reconciliation) |
 
-Global options via `configure({ … })`: `filters`, `persist`, persistence `maxAge` (default 24 h) and `buster`.
+Global options via `configure({ … })`: `actions` (explicit name → function registration), `filters`, `persist`, persistence `maxAge` (default 24 h) and `buster`.
 
 ## Behavior functions
 
@@ -137,9 +137,9 @@ What a project imports from the runtime package:
 | Module | Exports |
 |---|---|
 | `runtime/index.js` | `configure` |
-| `runtime/action.js` | `action`, `provider`, `mutation` |
+| `runtime/action.js` | `action`, `provider`, `mutation`, `HttpMethod` |
 | `runtime/formats.js` | `json`, `text`, `multipart`, `urlencoded` |
-| `runtime/cache.js` | `respectCacheOr` |
+| `runtime/cache.js` | `respectCacheOr`, `defaultItems`, `mergeInfinite`, `mergePages` |
 | `runtime/stores.js` | `localStore`, `sessionStore`, `indexedDbStore` |
 | `runtime/filters.js` | `currency`, `number`, `percent`, `date`, `relativeTime`, `upper`, `lower`, `truncate` (re-exported from `shared`) |
 
@@ -153,3 +153,9 @@ From [04 · Packages](04-builder-and-editor.md#packages).
 | `runtime` | Part 1: `<render-template>`, binder, actions, tags, cache, events | `shared` |
 | `builder` | Part 2: HTML parsing, component tags, `{{ }}`, build pipeline | `shared` |
 | `editor` | Part 2: the browser editor | `shared`, `runtime`, `builder` |
+
+TypeScript exports include separate request/query/write interfaces, GET/QUERY
+provider interfaces, mutation options, typed provider/mutation action functions,
+and the normalized role union. Forbidden role fields are `never`; GET encoders
+and read methods on mutations fail type checking. HTTP extension methods remain
+available through the baseline `action()` helper.

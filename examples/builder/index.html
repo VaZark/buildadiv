@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Buildadiv · Static component expansion</title>
+    <script type="module" src="./main.js"></script>
+    <style>
+      body {
+        max-width: 60rem;
+        margin: 2rem auto;
+        padding: 1rem;
+        font: 1rem/1.5 system-ui;
+      }
+      iframe {
+        width: 100%;
+        height: 22rem;
+        border: 1px solid #bbc;
+      }
+      pre {
+        overflow: auto;
+        padding: 1rem;
+        background: #f2f4f6;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Static components, native imports</h1>
+    <p>
+      The builder expands a separate HTML document. The preview needs no builder or framework code.
+    </p>
+    <iframe title="Built page preview" sandbox=""></iframe>
+    <h2>Generated HTML</h2>
+    <pre><code id="output">Building…</code></pre>
+  </body>
+</html>

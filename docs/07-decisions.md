@@ -82,3 +82,40 @@ What was decided, grouped by topic, and what each decision replaced. When a deci
 | No declared schemas. A v1.1 linter derives each template's required fields and generates types; TypeScript checks every registered template against at least one of the action's `{ response, context }` return types. The `context` function isn't tested | OpenAPI-style schemas; a `shape` option |
 | Ports map data props to bindings and `children` / render props to slots | Props mapped to "slots or bindings" without a rule |
 | Automatic component suggestions and React/Vue generation are opt-in MCP features (v2+) | Automatic suggestions in the v1 builder |
+
+## Runtime implementation conventions
+
+| Decision | Replaces |
+|---|---|
+| Native browser ES modules; `configure({ actions })` explicitly registers imported functions under unique HTML/event names | Unspecified discovery of module-local action exports |
+| Helper actions return `{ response, context }` in every state; direct components accept `.data`, retaining previews until data is supplied | Unspecified JavaScript rendering/call interface |
+| Runtime adds `data-c`; pages link CSS with explicit scoped selectors and import behavior modules normally | Unspecified runtime asset loading / CSS rewriting |
+| Infinite providers share a sequence; explicit arguments select pages; exported `mergeInfinite` / `mergePages` defaults and `items` enable envelope responses | Unspecified pagination call / viewport integration |
+
+## Initial static expansion
+
+| Decision | Replaces |
+|---|---|
+| Builder first stage exposes in-place DOM expansion and HTML parsing/serialization functions; no runtime dependency | Unspecified first implementation boundary |
+| Component attributes become string `props`; slot markup retains caller scope; `{{ }}` results are never reparsed | Open question about passing static values to component tags |
+| Runtime templates and render hosts, script/style text and comments pass through unchanged; unknown custom tags are preserved | Unspecified preservation rules for existing vanilla pages |
+| Scope attributes belong to component-owned elements; host attributes are used explicitly through `props` | Unspecified root/host attribute forwarding |
+
+## TypeScript implementation
+
+| Decision | Replaces |
+|---|---|
+| All library source, examples, test server and tests use strict TypeScript; `tsc` emits ordinary ES modules, declarations and source maps to `dist/` | JavaScript-only implementation source |
+| Keep `.js` import specifiers in `.ts` source; vanilla websites load the emitted files without bundling | Unspecified TypeScript/browser distribution path |
+| Public contracts describe actions/results, providers/mutations, filters, stores and component expansion; request data remains untrusted `unknown` internally | Implicit JavaScript contracts |
+| Function comments state purpose and expected behavior, including lifecycle and scope ownership | Implementation-only comments |
+| Action role contracts use request/query/write interfaces, derived forbidden `never` fields, typed method vocabulary, role-specific return types and a normalized discriminator | Runtime arrays of read/write option names and a method set |
+| Standard methods are typed by role; custom HTTP extension methods use the baseline `action()` | Unrestricted string methods on the mutation convenience helper |
+
+## Semantic source organization
+
+| Decision | Replaces |
+|---|---|
+| Keep documented entry points as thin facades over nested contracts, actions, data, DOM and configuration modules | Large mixed-responsibility runtime action/type files |
+| Inject a typed refetch callback into request execution, cache timers and tag effects to keep value imports acyclic | Request/query/tag logic living in one file |
+| Separate builder parsing, definitions, interpolation and expansion; group validation by domain with a code map | Single builder implementation and flat validation files |
