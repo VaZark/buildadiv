@@ -8,26 +8,9 @@
         font: 1rem/1.5 system-ui;
         padding: 1rem;
       }
-      .card[data-c='product-card'] {
-        border: 1px solid #ccd;
-        border-radius: 0.5rem;
-        padding: 1rem;
-      }
     </style>
   </head>
   <body>
-    <template data-component="site-layout">
-      <header><h1>{{ props.title }}</h1></header>
-      <main><slot>Page content</slot></main>
-      <footer><slot name="footer">Footer</slot></footer>
-    </template>
-    <template data-component="product-card">
-      <article class="card">
-        <h2>{{ props.name }}</h2>
-        <p>{{ props.price }}</p>
-        <slot>Product details</slot>
-      </article>
-    </template>
     <site-layout title="{{ site.title | upper }}">
       <product-card name="{{ product.name }}" price="{{ product.price | currency:EUR }}">
         <p>{{ site.note }}</p>

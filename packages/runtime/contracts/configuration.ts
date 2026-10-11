@@ -1,3 +1,4 @@
+import type { ComponentLoader } from '../../shared/components.js';
 import type { FilterRegistry } from '../../shared/types.js';
 import type { RegistrableAction } from './actions.js';
 import type { Store } from './storage.js';
@@ -8,4 +9,6 @@ export interface Configuration {
   persist?: Store | false;
   maxAge?: number;
   buster?: string;
+  /** Loads component files for templates the page does not declare inline. */
+  components?: ComponentLoader;
 }

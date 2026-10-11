@@ -2,6 +2,8 @@ import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { resolve, extname } from 'node:path';
 const root = resolve(process.cwd(), 'dist');
+// `npm run dev` uses 4173; the browser tests pass their own port so both can run at once.
+const port = Number(process.env.PORT) || 4173;
 const types: Record<string, string> = {
   '.html': 'text/html',
   '.js': 'text/javascript',
@@ -42,6 +44,13 @@ createServer(async (request, response) => {
       response.end(JSON.stringify(products[0]));
       return;
     }
+    const productId = /^\/api\/products\/(\d+)$/.exec(url.pathname)?.[1];
+    if (productId && request.method === 'DELETE') {
+      products = products.filter((product) => product.id !== Number(productId));
+      response.writeHead(204);
+      response.end();
+      return;
+    }
     if (url.pathname === '/api/import') {
       products[1].name = 'Imported hat';
       response.end('{}');
@@ -67,7 +76,9 @@ createServer(async (request, response) => {
     }
     if (url.pathname === '/api/pages') {
       const page = Number(url.searchParams.get('page'));
-      response.end(JSON.stringify([{ id: page, name: `Page ${page}` }]));
+      // An optional delay lets manual testers act while a page is still loading.
+      const delay = Number(url.searchParams.get('delay')) || 0;
+      setTimeout(() => response.end(JSON.stringify([{ id: page, name: `Page ${page}` }])), delay);
       return;
     }
     if (url.pathname === '/api/echo') {
@@ -93,4 +104,9 @@ createServer(async (request, response) => {
     response.writeHead(404);
     response.end('Not found');
   }
-}).listen(4173, '127.0.0.1');
+}).listen(port, '127.0.0.1', () => {
+  const origin = `http://127.0.0.1:${port}`;
+  console.log(`Runtime shop:      ${origin}/examples/vanilla/index.html`);
+  console.log(`Builder preview:   ${origin}/examples/builder/index.html`);
+  console.log(`Manual playground: ${origin}/examples/playground/index.html`);
+});

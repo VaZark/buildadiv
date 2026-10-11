@@ -37,6 +37,7 @@ export function configure(options: Configuration = {}): void {
   if (options.persist !== undefined) settings.persist = options.persist;
   if (options.maxAge !== undefined) settings.maxAge = options.maxAge;
   if (options.buster !== undefined) settings.buster = options.buster;
+  if (options.components !== undefined) settings.components = options.components;
   scanEvents();
   for (const element of document.querySelectorAll('render-template')) element.start();
 }

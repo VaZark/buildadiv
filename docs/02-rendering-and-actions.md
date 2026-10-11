@@ -281,7 +281,33 @@ The exported default `mergeInfinite` concatenates arrays and `mergePages` replac
 the response; use `merge` for envelopes. Infinite array rows carry page markers
 for viewport tracking. Envelope-based lists use the provider's `items` function
 for page markers. Styles are ordinary linked CSS with explicit `[data-c]` selectors;
-the runtime adds scope attributes but does not fetch or rewrite CSS or component JS.
+the runtime adds scope attributes and never rewrites CSS.
+
+## Component files
+
+A `<render-template>` can render components that live in the `components/` folder
+instead of in the page. Configure where they are, once:
+
+```js
+import { configure } from '../runtime/index.js';
+import { componentFolder } from '../runtime/components.js';
+
+configure({ components: componentFolder('/components/') });
+```
+
+- When a `<render-template>` names a template the page doesn't declare, the runtime
+  loads `components/<name>/<name>.html`, links the stylesheets and imports the
+  behavior modules it declares ([01](01-templates.md#component-folder)), then renders.
+  The template is added to the page, so every later use renders immediately.
+- Each component loads once, however many elements use it. Stylesheets finish
+  loading and behavior modules finish importing before the first render.
+- A template already in the page (inline, or shipped by the build) is used as is; the
+  build declares that component's assets itself.
+- `components` is a function `(name) => Promise<{ url, html } | undefined>`;
+  `componentFolder(base)` is the default implementation. Without it, only templates
+  declared in the page render, and an unknown name is reported as an error.
+- A missing file (404) is an unknown template. A failing stylesheet or behavior module
+  is reported, and the component still renders.
 
 ## TypeScript action roles
 

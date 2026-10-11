@@ -1,3 +1,4 @@
+import type { ComponentLoader } from '../../shared/components.js';
 import { fallback } from '../../shared/filters.js';
 import type { FilterRegistry } from '../../shared/types.js';
 import type { RegisteredAction, RegistrableAction } from '../contracts/actions.js';
@@ -9,6 +10,8 @@ export const settings: {
   persist: Store | false;
   maxAge: number;
   buster: string;
+  /** Absent by default: only templates declared in the page can render. */
+  components?: ComponentLoader;
 } = {
   filters: { fallback },
   actions: new Map(),

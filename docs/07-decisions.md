@@ -94,7 +94,16 @@ What was decided, grouped by topic, and what each decision replaced. When a deci
 |---|---|
 | Native browser ES modules; `configure({ actions })` explicitly registers imported functions under unique HTML/event names | Unspecified discovery of module-local action exports |
 | Helper actions return `{ response, context }` in every state; direct components accept `.data`, retaining previews until data is supplied | Unspecified JavaScript rendering/call interface |
-| Runtime adds `data-c`; pages link CSS with explicit scoped selectors and import behavior modules normally | Unspecified runtime asset loading / CSS rewriting |
+| Runtime adds `data-c`; component CSS uses explicit scoped selectors and is never rewritten | Unspecified CSS rewriting |
+| Component files declare their optional stylesheet and behavior module with `<link rel="stylesheet">` / `<script type="module" src>` next to the template | Probing for `<name>.css` / `<name>.js` by file name |
+| A `<render-template>` naming a template not in the page loads its component file through `configure({ components })`, links its CSS and imports its JS once, before the first render | Pages linking every component's CSS and JS by hand |
+| `buildPage` loads component files for tags and runtime references, renders tags and ships only runtime templates. It never links component CSS/JS into the page: it reports per-page usage, and `siteAssets` merges it into the inputs of one global CSS/JS build | Components only as inline templates; per-page `<link>`/`<script>` tags for each component |
+| Component loading is a function (`componentFolder(base)` is the default) shared by runtime and builder; the builder still owns no I/O itself | String folder settings |
+| Component JS is an ordinary module imported once per page; its rules are unchanged (no data fetching) | n/a |
+| `buildPage` can unify and minify a page's component CSS/JS into one file each, named by a customisable `name({ project, page })` (default `${project}-${page}`), linked once from the page and returned for the caller to write | Per-component links; a single unnamed global bundle |
+| Bundling is a `Bundler` function; the default implementation uses Vite+ (Rolldown, Lightning CSS) and is Node-only | esbuild-wasm; a built-in concatenating bundler |
+| Node-only adapters live in `packages/<package>/node/`, may import `node:*` and `vite-plus`, and are never imported by browser modules (enforced by the architecture check) | All package code restricted to relative imports |
+| Browser tests serve on port 4174 (`TEST_PORT`), separate from `npm run dev` on 4173 (`PORT`) | Both fixed to 4173 |
 | Infinite providers share a sequence; explicit arguments select pages; exported `mergeInfinite` / `mergePages` defaults and `items` enable envelope responses | Unspecified pagination call / viewport integration |
 
 ## Initial static expansion
@@ -104,6 +113,8 @@ What was decided, grouped by topic, and what each decision replaced. When a deci
 | Builder first stage exposes in-place DOM expansion and HTML parsing/serialization functions; no runtime dependency | Unspecified first implementation boundary |
 | Component attributes become string `props`; slot markup retains caller scope; `{{ }}` results are never reparsed | Open question about passing static values to component tags |
 | Runtime templates and render hosts, script/style text and comments pass through unchanged; unknown custom tags are preserved | Unspecified preservation rules for existing vanilla pages |
+| Build output omits static definitions unless a `<render-template>` (directly or inside a shipped template) names them; in-place expansion keeps them | Every definition shipped in build output |
+| The `<render-template>` attributes that name templates live in `shared`, used by the runtime element and the builder | A runtime-only attribute list |
 | Scope attributes belong to component-owned elements; host attributes are used explicitly through `props` | Unspecified root/host attribute forwarding |
 
 ## TypeScript implementation

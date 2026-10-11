@@ -14,6 +14,13 @@ const allowedPackages: Record<string, ReadonlySet<string>> = {
   builder: new Set(['builder', 'shared']),
   editor: new Set(['editor', 'shared', 'runtime', 'builder']),
 };
+/**
+ * Node-only adapters (`packages/<package>/node/`) may use Node built-ins and the
+ * development toolchain; everything else must stay browser-compatible.
+ */
+const nodeFolder = (path: string): boolean => relative(packageRoot, path).split('/')[1] === 'node';
+const nodeImport = (target: string): boolean =>
+  target.startsWith('node:') || target === 'vite-plus';
 
 /** Traverse only authored TypeScript so generated output cannot hide an invalid dependency. */
 async function sourceFiles(directory: string): Promise<string[]> {
@@ -87,6 +94,7 @@ async function dependencyGraph(): Promise<Map<string, string[]>> {
     const owner = relative(packageRoot, path).split('/')[0];
     const edges: string[] = [];
     for (const dependency of dependencies(source)) {
+      if (nodeFolder(path) && nodeImport(dependency.target)) continue;
       if (!dependency.target.startsWith('.') || !dependency.target.endsWith('.js')) {
         throw new Error(
           `${relative(packageRoot, path)} must use a relative native .js import: ${dependency.target}`,
@@ -97,6 +105,11 @@ async function dependencyGraph(): Promise<Map<string, string[]>> {
       if (!known.has(target) || !allowedPackages[owner]?.has(targetOwner)) {
         throw new Error(
           `Invalid package dependency: ${relative(packageRoot, path)} → ${dependency.target}`,
+        );
+      }
+      if (nodeFolder(target) && !nodeFolder(path)) {
+        throw new Error(
+          `Browser module imports a Node-only adapter: ${relative(packageRoot, path)} → ${dependency.target}`,
         );
       }
       if (!dependency.typeOnly) edges.push(target);

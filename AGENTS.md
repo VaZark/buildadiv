@@ -33,6 +33,7 @@ Use [CONTRIBUTING.md](CONTRIBUTING.md) for the full coding/review guidelines and
 
 - Keep documented public imports as small entry points. Group internals in semantic nested folders; avoid mixed-responsibility modules.
 - Keep value imports acyclic; inject typed coordinator callbacks where needed. Use type-only imports for contracts.
+- Package code stays browser-compatible. Node-only adapters (e.g. the Vite+ bundler) live in `packages/<package>/node/` and are passed into core code as functions.
 - Four packages: `shared`, `runtime`, `builder`, `editor` ([04](docs/04-builder-and-editor.md#packages)).
 - `shared` imports from no other package. `runtime` and `builder` import from `shared` but **never from each other**. Part 1 stands alone.
 - Logic needed both at build time and in the browser (filters, the filter-pipeline parser, path resolution, slot filling) goes in `shared`, written once.

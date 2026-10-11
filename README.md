@@ -18,10 +18,16 @@ vp install        # or: npm install
 npm run dev
 ```
 
-Open http://127.0.0.1:4173/examples/vanilla/index.html for the runtime shop, or
-http://127.0.0.1:4173/examples/builder/index.html for static component expansion.
-The development server serves compiled files and a demonstration API; it is not
-part of the library. Example requests live in `examples/vanilla/api/`.
+The server prints its URLs on start:
+
+- http://127.0.0.1:4173/examples/vanilla/index.html: the runtime shop.
+- http://127.0.0.1:4173/examples/builder/index.html: static component expansion.
+- http://127.0.0.1:4173/examples/playground/index.html: a manual test page with one
+  scenario per runtime behavior, its steps and expected result, live server request
+  counts and a document-event log. Keep the browser console open; two scenarios
+  report deliberate errors there.
+  The development server serves compiled files and a demonstration API; it is not
+  part of the library. Example requests live in `examples/vanilla/api/`.
 
 ## Use the runtime on a vanilla page
 
@@ -62,6 +68,12 @@ const renameProduct = mutation<{ id: number; name: string }, Product>({
 });
 ```
 
+Components can also live in `components/<name>/<name>.html`, declaring their own
+optional stylesheet and behavior module. Configure the folder with
+`configure({ components: componentFolder('/components/') })` (from
+`./runtime/components.js`); a `<render-template>` then loads the component, its CSS
+and its JS once, before the first render. See [component files](docs/02-rendering-and-actions.md#component-files).
+
 For direct rendering, use `template="greeting"` and assign the element's `.data`
 property. Preview content remains until data is supplied. Actions return
 `{ response, context }`; request failures return an error context and emit events.
@@ -98,8 +110,16 @@ const output = buildHtml(
 
 Supports nested definitions, multiple roots, attribute props, caller-scoped slots,
 shared filter pipelines, sanitization, and cycle/duplicate diagnostics. Runtime
-`<template>` and `<render-template>` blocks pass through. This first stage does
-not yet bundle assets or provide a CLI/editor; see [the builder spec](docs/04-builder-and-editor.md).
+`<template>` and `<render-template>` blocks pass through; definitions used only by
+component tags are rendered at build time and left out of the output.
+`buildPage(html, { loadComponent: componentFolder('/components/') })` loads component
+folders for the tags and runtime references a page uses and returns `{ html, components }`.
+Pages never link component CSS or JS; `siteAssets(pages)` merges every page's usage
+into the inputs of the site's global CSS/JS build, so only used components are
+included. With `bundle: { bundler, project, page }`, each page gets one unified,
+minified stylesheet and script (`shop-home.min.css` / `.js` by default; the name is a
+customisable function) built by the Node-only `viteBundler` (Vite+: Rolldown and
+Lightning CSS). This stage does not yet provide a CLI/editor; see [the builder spec](docs/04-builder-and-editor.md#component-files).
 
 ## Verification
 

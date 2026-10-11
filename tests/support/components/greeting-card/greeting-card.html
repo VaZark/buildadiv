@@ -1,0 +1,9 @@
+<link rel="stylesheet" href="greeting-card.css" />
+<script type="module" src="greeting-card.js"></script>
+<template data-component="greeting-card">
+  <article class="greeting">
+    <h2><slot name="title">Greeting</slot></h2>
+    <p data-bind="response.message">Preview message</p>
+    <button>Wave</button>
+  </article>
+</template>

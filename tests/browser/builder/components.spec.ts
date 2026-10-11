@@ -188,3 +188,44 @@ test('a component wrapper leaves nested runtime hosts and their slot sockets unt
     '<render-template template="live"><slot name="outside">Runtime fallback</slot><p>{{ missing | unknown }}</p></render-template>',
   );
 });
+
+test('build output drops static definitions unless a runtime host still renders them', async ({
+  page,
+}) => {
+  const result = await page.evaluate(async () => {
+    const { buildHtml, expandComponents, parseHtml } = await import('/packages/builder/index.js');
+    const source = `<!doctype html><body>
+      <template data-component="page-frame"><main><slot>Content</slot></main></template>
+      <template data-component="unused-card"><p>Never placed</p></template>
+      <template data-component="product-rows" data-accepts="array" data-item="product">
+        <li><render-template template="price-tag"></render-template></li>
+      </template>
+      <template data-component="price-tag"><b>Price</b></template>
+      <template data-component="rows"><render-template on-error="error-note"></render-template></template>
+      <template data-component="error-note"><p>Failed</p></template>
+      <template data-component="dead-host"><render-template template="dead-target"></render-template></template>
+      <template data-component="dead-target"><p>Only named by an unused definition</p></template>
+      <page-frame><ul><render-template on-success="product-rows"></render-template></ul></page-frame>
+    </body>`;
+    const names = (root: ParentNode) =>
+      Array.from(
+        root.querySelectorAll<HTMLTemplateElement>('template[data-component]'),
+        (template) => template.dataset.component,
+      );
+    const expandedOnly = parseHtml(source);
+    expandComponents(expandedOnly);
+    const built = parseHtml(buildHtml(source));
+    return {
+      built: names(built),
+      expandedOnly: names(expandedOnly).length,
+      main: built.querySelectorAll('main > ul > render-template').length,
+    };
+  });
+  expect(result).toEqual({
+    // Runtime-rendered templates (and those they place) stay; single-word declarations stay.
+    built: ['product-rows', 'price-tag', 'rows', 'error-note'],
+    // The in-place expansion stage alone keeps every definition for editor reuse.
+    expandedOnly: 8,
+    main: 1,
+  });
+});

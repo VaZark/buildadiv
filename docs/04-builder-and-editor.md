@@ -112,13 +112,75 @@ api/             # providers and mutations
 - **Runtime library:** an ES module, from a CDN `<script type="module">` or a package manager. Tree-shakable.
 - **Builder & editor:** the browser-based editor, plus a CLI build for CI.
 
+## Component files
+
+Components live in `components/<name>/<name>.html`, with optional stylesheets and
+behavior modules declared in that file ([01](01-templates.md#component-folder)).
+`buildPage(html, { loadComponent, ...options })` builds a page from them:
+
+```js
+import { buildPage, componentFolder } from './builder/index.js';
+
+const shop = await buildPage(source, {
+  loadComponent: componentFolder('/components/'),
+  data: { site },
+});
+// shop.html: the page; shop.components: [{ name, styles, scripts }, …]
+const global = siteAssets([shop, about, contact]); // { styles, scripts } for the global build
+```
+
+- It loads every component the page mentions (component tags and `<render-template>`
+  references, following the components those files mention), once each, then builds.
+- **Component tags** render at build time; their templates don't ship.
+- **Templates the runtime renders** ship in the page, so the browser doesn't fetch them.
+- **Component CSS and JS are never linked one by one.** The build reports every
+  component the page uses, either way, in `components`, with the stylesheets and
+  behavior modules its file declares, so a component no page uses never ships.
+- **Page bundles.** With `bundle: { bundler, project, page }`, the page's component
+  CSS and JS are unified and minified into one file each, and the page links just
+  those two, at the end of `<head>` after its own styles:
+
+  ```js
+  import { viteBundler } from './builder/node/vite.js'; // Node only
+
+  const home = await buildPage(source, {
+    loadComponent: componentFolder('/components/'),
+    bundle: { bundler: viteBundler({ root: 'site' }), project: 'shop', page: 'home' },
+  });
+  // home.html links /assets/shop-home.min.css and /assets/shop-home.min.js
+  // home.bundle: { css: { fileName, code }, js: { fileName, code } } — write them to /assets/
+  ```
+
+  - File names come from the customisable `name({ project, page })` function; the
+    exported default `bundleName` gives `${project}-${page}`. Names must be file-safe
+    (`[\w.-]`). `base` sets the URL path the files are served from (default `/assets/`).
+  - Files are listed in first-use order, styles before scripts, so the cascade follows
+    component use. A page using no component assets gets no bundle and no links.
+  - The bundler is a function `({ name, styles, scripts }) => Promise<{ css?, js? }>`
+    and the build returns the files rather than writing them, so the builder still owns
+    no I/O. `viteBundler({ root })` (Node only) uses Vite+: Rolldown resolves and bundles
+    JS imports, Lightning CSS minifies CSS. It accepts only root-relative URLs inside
+    `root`. CSS scope rewriting is still not done.
+- `siteAssets(pages)` still merges every page's usage into one deduplicated list, for
+  a site-wide bundle instead of per-page ones.
+- Unknown names (the loader resolves nothing) stay unknown custom elements.
+- `loadComponent` is a function `(name) => Promise<{ url, html } | undefined>`, so
+  the same build works from a server folder, editor buffers or the File System Access
+  API. `componentFolder(base)` is the default; pass a root-relative base so reported
+  asset URLs are root-relative.
+- `buildHtml` accepts the same `{ url, html }` files in `components` when the caller
+  has already loaded them, and stays synchronous.
+
 ## Initial component expansion API
 
 The first builder stage is a native ES module compiled from `packages/builder/index.ts` to `dist/packages/builder/index.js`.
 It works on browser DOM documents or fragments, without importing the runtime.
 `expandComponents(root, { components, data, filters })` modifies a parsed DOM in
 place and returns it. `buildHtml(html, options)` parses a separate document and
-returns static HTML. `parseHtml` and `serializeHtml` are exported defaults; pass
+returns static HTML. `removeStaticDefinitions(root)` drops static definitions the
+browser no longer needs; `buildHtml` runs it after expansion, while
+`expandComponents` alone keeps every definition so an editor can expand again.
+`parseHtml` and `serializeHtml` are exported defaults; pass
 `parse` and `serialize` functions to `buildHtml` to supply another DOM adapter.
 This stage does not bundle assets or implement the editor or CLI.
 
@@ -153,7 +215,14 @@ Supplied markup keeps its caller's scope attributes.
 as markup or expressions. Only `fallback` is registered by default. Script/style
 contents, comments, runtime `<template>` declarations and `<render-template>`
 subtrees stay untouched. Templates used as definitions are expanded only through
-their cloned content. Full-document parsing follows the browser's HTML rules
+their cloned content.
+
+Component tags render at build time, so `buildHtml` output does not ship their
+definitions. A hyphenated definition stays only when a `<render-template>` names it
+(`template`, `on-pending`, `on-success`, `on-no-content`, `on-error`), including
+hosts inside other shipped templates. Single-word runtime declarations always stay.
+A template that page scripts reference only from JavaScript must therefore be
+named by a `<render-template>` in markup or use a single-word name. Full-document parsing follows the browser's HTML rules
 (including repairs to malformed HTML); custom component tags need explicit
 closing tags. The builder is static composition, not a Jinja server adapter.
 

@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Buildadiv · Manual playground</title>
+    <link rel="stylesheet" href="./style.css" />
+    <script type="module" src="./main.js"></script>
+  </head>
+  <body>
+    <header class="intro">
+      <h1>Manual playground</h1>
+      <p>
+        One scenario per runtime behavior. Follow the steps, compare with “Expect”, and keep the
+        browser console open. Server request counts and document events update on the right.
+      </p>
+    </header>
+
+    <main>
+      <section class="scenario">
+        <h2>1 · A trigger refreshes fresh data</h2>
+        <ol class="steps">
+          <li>Note the <code>/api/products</code> count.</li>
+          <li>Click <em>Refresh products</em>, then <em>Refresh counts</em>.</li>
+        </ol>
+        <p class="expect">
+          Expect: the count rises by one per click, although the cached data never goes stale.
+        </p>
+        <ul class="rows">
+          <render-template
+            subscribe-to-action="loadProducts"
+            on-pending="loading"
+            on-success="product-names"
+          ></render-template>
+        </ul>
+        <button data-action="loadProducts">Refresh products</button>
+      </section>
+
+      <section class="scenario">
+        <h2>2 · Delete with a string id from <code>data-key</code></h2>
+        <ol class="steps">
+          <li>Click <em>Delete</em> on a row.</li>
+        </ol>
+        <p class="expect">
+          Expect: the row disappears from this list and from scenario 1, because
+          <code>{ id: '2' }</code> invalidates the cached item with numeric id <code>2</code>. Use
+          <em>Reset demo data</em> to restore it.
+        </p>
+        <ul class="rows">
+          <render-template
+            subscribe-to-action="loadProducts"
+            on-success="product-rows"
+          ></render-template>
+        </ul>
+      </section>
+
+      <section class="scenario">
+        <h2>3 · Select a page while another loads</h2>
+        <ol class="steps">
+          <li>Click <em>Page 2</em> and then, within a second, <em>Page 5</em>.</li>
+        </ol>
+        <p class="expect">
+          Expect: “Page 2” flashes, “Loading…” returns, and “Page 5” stays. After
+          <em>Refresh counts</em>, both <code>page=2</code> and <code>page=5</code> are listed; the
+          second click is never dropped.
+        </p>
+        <render-template
+          subscribe-to-action="loadPage"
+          on-pending="loading"
+          on-success="page-rows"
+        ></render-template>
+        <button data-page="2">Page 2</button>
+        <button data-page="5">Page 5</button>
+      </section>
+
+      <section class="scenario">
+        <h2>4 · Context runs in every state</h2>
+        <ol class="steps">
+          <li>Click <em>Reload status</em> and watch the text while it loads.</li>
+        </ol>
+        <p class="expect">
+          Expect: “waiting for the server”, then “loaded with HTTP 200”. The failing request shows
+          its own context hint: “The server answered 500”.
+        </p>
+        <render-template
+          subscribe-to-action="loadStatus"
+          on-pending="status"
+          on-success="status"
+        ></render-template>
+        <render-template subscribe-to-action="loadFailure" on-error="failure"></render-template>
+        <button data-action="loadStatus">Reload status</button>
+      </section>
+
+      <section class="scenario">
+        <h2>5 · A throwing context function is contained</h2>
+        <ol class="steps">
+          <li>Click <em>Reload careless</em>.</li>
+        </ol>
+        <p class="expect">
+          Expect: the region still shows “0 fields”. The console shows one reported
+          <code>TypeError</code> per request (from the pending state), and the event log shows
+          <code>loadCareless:success</code>, not <code>error</code>.
+        </p>
+        <render-template
+          subscribe-to-action="loadCareless"
+          on-pending="loading"
+          on-success="careless"
+        ></render-template>
+        <button data-action="loadCareless">Reload careless</button>
+      </section>
+
+      <section class="scenario">
+        <h2>6 · A broken template does not fail the request</h2>
+        <ol class="steps">
+          <li>Click <em>Reload rows</em>.</li>
+        </ol>
+        <p class="expect">
+          Expect: the healthy region shows the product count. The console reports “List keys must be
+          unique” from the broken region, and the event log shows
+          <code>loadBrokenRows:success</code> with no <code>error</code>.
+        </p>
+        <render-template
+          subscribe-to-action="loadBrokenRows"
+          on-success="product-count"
+        ></render-template>
+        <ul class="rows">
+          <render-template
+            subscribe-to-action="loadBrokenRows"
+            on-success="duplicate-rows"
+          ></render-template>
+        </ul>
+        <button data-action="loadBrokenRows">Reload rows</button>
+      </section>
+    </main>
+
+    <aside class="monitor">
+      <h2>Server requests</h2>
+      <ul class="rows">
+        <render-template subscribe-to-action="loadCalls" on-success="call-rows"></render-template>
+      </ul>
+      <button data-action="loadCalls">Refresh counts</button>
+      <button data-action="resetDemo">Reset demo data</button>
+      <h2>Document events</h2>
+      <button id="clear-log">Clear</button>
+      <ol id="event-log" reversed></ol>
+    </aside>
+
+    <template data-component="loading"><p class="muted">Loading…</p></template>
+    <template data-component="product-names" data-accepts="array" data-item="product" data-key="id">
+      <li>
+        <span data-bind="product.name">Product name</span>
+        <span data-bind="product.price | currency:EUR">€0.00</span>
+      </li>
+    </template>
+    <template data-component="product-rows" data-accepts="array" data-item="product" data-key="id">
+      <li>
+        <span data-bind="product.name">Product name</span>
+        <button class="delete">Delete</button>
+      </li>
+    </template>
+    <template data-component="page-rows" data-accepts="array" data-item="row" data-key="id">
+      <p><strong data-bind="row.name">Page name</strong></p>
+    </template>
+    <template data-component="status">
+      <p>Status: <span data-bind="context.phase">phase</span></p>
+    </template>
+    <template data-component="failure">
+      <p role="alert">Failed: <span data-bind="context.hint">hint</span></p>
+    </template>
+    <template data-component="careless">
+      <p><span data-bind="context.fields | fallback:'0'">0</span> fields</p>
+    </template>
+    <template data-component="product-count">
+      <p><span data-bind="response.length">0</span> products (healthy region)</p>
+    </template>
+    <template
+      data-component="duplicate-rows"
+      data-accepts="array"
+      data-item="product"
+      data-key="missing"
+    >
+      <li data-bind="product.name">Product name</li>
+    </template>
+    <template
+      data-component="call-rows"
+      data-accepts="array"
+      data-from="context.rows"
+      data-item="call"
+      data-key="path"
+    >
+      <li><code data-bind="call.path">/api/path</code> × <span data-bind="call.count">0</span></li>
+    </template>
+  </body>
+</html>

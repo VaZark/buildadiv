@@ -1,0 +1,63 @@
+body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 20rem;
+  grid-template-areas:
+    'intro intro'
+    'main monitor';
+  gap: 1.5rem;
+  max-width: 72rem;
+  margin: 2rem auto;
+  padding: 0 1rem;
+  font: 1rem/1.6 system-ui;
+  color: #24313a;
+}
+.intro {
+  grid-area: intro;
+}
+main {
+  grid-area: main;
+}
+.monitor {
+  grid-area: monitor;
+  position: sticky;
+  top: 1rem;
+  align-self: start;
+  max-height: calc(100vh - 2rem);
+  overflow: auto;
+  border-left: 1px solid #ccd5dd;
+  padding-left: 1rem;
+}
+.scenario {
+  border: 1px solid #ccd5dd;
+  border-radius: 0.5rem;
+  padding: 0 1rem 1rem;
+  margin-bottom: 1rem;
+}
+.expect {
+  background: #eef6ee;
+  border-left: 3px solid #4a8a4a;
+  padding: 0.25rem 0.75rem;
+}
+button {
+  padding: 0.4rem 0.7rem;
+  cursor: pointer;
+}
+.muted[data-c='loading'] {
+  color: #6b7a86;
+}
+#event-log {
+  font:
+    0.8rem/1.4 ui-monospace,
+    monospace;
+}
+@media (max-width: 48rem) {
+  body {
+    grid-template-columns: 1fr;
+    grid-template-areas: 'intro' 'monitor' 'main';
+  }
+  .monitor {
+    position: static;
+    border-left: 0;
+    padding-left: 0;
+  }
+}

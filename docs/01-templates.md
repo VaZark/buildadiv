@@ -10,11 +10,23 @@ How a component is written: its folder, its `<template>`, and everything a templ
 
 ```
 components/product-card/
-  product-card.html           # <template> defining structure
-  product-card.css            # scoped styles
+  product-card.html           # <template> defining structure, plus its asset declarations
+  product-card.css            # scoped styles / overrides (optional)
   product-card.js             # local behavior (optional)
   product-card.fixtures.json  # named sample-data variants (optional)
 ```
+
+The component's HTML file declares its optional assets with ordinary tags, next to the template:
+
+```html
+<!-- components/product-card/product-card.html -->
+<link rel="stylesheet" href="product-card.css">
+<script type="module" src="product-card.js"></script>
+<template data-component="product-card">…</template>
+```
+
+- URLs resolve against the HTML file. Leave out a tag when the file doesn't exist; nothing probes for it.
+- **Wherever the component is used, its assets come with it.** In a built site, the build detects each component a page uses (as a tag or through a `<render-template>`) and includes its CSS and JS in the site's global build; pages don't link them individually ([04](04-builder-and-editor.md#component-files)). On a runtime-only page, a `<render-template>` loads them before the first render ([02](02-rendering-and-actions.md#component-files)). Each file loads once per page.
 
 ## Template
 
@@ -244,4 +256,5 @@ Show or hide an element based on **truthiness of paths**, and nothing more.
 
 - **Scoped CSS by attribute, not hashing.** The component's elements carry `data-c="product-card"` (added by the build for component tags, and by `<render-template>` at runtime), and its selectors use the scope: `.card` → `.card[data-c="product-card"]`. For standalone runtime pages, write those selectors explicitly and link the CSS normally; rewriting belongs to the builder. Class names stay exactly as written.
 - **Global CSS** lives in `styles/global/`: tokens (custom properties), resets, typography, layout. Only for things that are clearly global.
-- **Component JS** (`component.js`) holds behavior for one component, bundled and minified. It **never fetches data**; that's what actions are for.
+- Component CSS can override global rules; the `[data-c]` scope is in your selectors, and nothing rewrites it yet.
+- **Component JS** (`product-card.js`) is an ordinary ES module holding behavior for one component. It's imported **once**, before the component first renders, and typically attaches delegated listeners scoped by `[data-c="product-card"]`. It **never fetches data**; that's what actions are for.

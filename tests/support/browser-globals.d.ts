@@ -13,5 +13,6 @@ declare global {
     detached: RenderTemplate;
     viewportTest: Action<number>;
     invalidateViewport: Action;
+    greetingBehaviorLoads?: number;
   }
 }

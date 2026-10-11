@@ -20,11 +20,11 @@ interface AssignedScope {
  */
 export function expandComponents<Root extends DomRoot>(
   root: Root,
-  { components = [], data = {}, filters = {} }: ExpansionOptions = {},
+  { components = [], data = {}, filters = {}, onExpand }: ExpansionOptions = {},
 ): Root {
   if (!root?.querySelectorAll)
     throw new TypeError('Expansion requires a DOM document, fragment, or element');
-  const definitions = collectDefinitions(root, components);
+  const definitions = collectDefinitions(root, components).templates;
   const registry = { fallback, ...filters };
   const assignedScopes = new WeakMap<Node, AssignedScope>();
 
@@ -73,6 +73,7 @@ export function expandComponents<Root extends DomRoot>(
     const definition = definitions.get(name);
     if (definition) {
       if (stack.includes(name)) throw new Error(`Component cycle: ${[...stack, name].join(' → ')}`);
+      onExpand?.(name);
       const props = Object.fromEntries(
         Array.from(element.attributes, (attribute) => [
           attribute.name,

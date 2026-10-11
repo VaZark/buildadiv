@@ -83,7 +83,7 @@ From [02 · Rendering and actions](02-rendering-and-actions.md#render-template).
 | `invalidates` | mutation | none; `'Tag'`, `['A', 'B']`, `{ tag, key }`, `{ tag, id }` | [03](03-data-layer.md#invalidation) |
 | `reconciles` | mutation | none; `{ tag, key }` | [03](03-data-layer.md#reconciliation) |
 
-Global options via `configure({ … })`: `actions` (explicit name → function registration), `filters`, `persist`, persistence `maxAge` (default 24 h) and `buster`.
+Global options via `configure({ … })`: `actions` (explicit name → function registration), `filters`, `persist`, persistence `maxAge` (default 24 h), `buster`, and `components` (a component-file loader; default none, so only templates in the page render).
 
 ## Behavior functions
 
@@ -141,6 +141,7 @@ What a project imports from the runtime package:
 | `runtime/formats.js` | `json`, `text`, `multipart`, `urlencoded` |
 | `runtime/cache.js` | `respectCacheOr`, `defaultItems`, `mergeInfinite`, `mergePages` |
 | `runtime/stores.js` | `localStore`, `sessionStore`, `indexedDbStore` |
+| `runtime/components.js` | `componentFolder` |
 | `runtime/filters.js` | `currency`, `number`, `percent`, `date`, `relativeTime`, `upper`, `lower`, `truncate` (re-exported from `shared`) |
 
 ## Packages

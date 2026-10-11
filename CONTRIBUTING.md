@@ -15,6 +15,10 @@ implemented; the remaining builder pipeline and editor are planned.
   Keep contracts, HTTP actions, cached data, DOM rendering and settings distinct.
 - Keep value imports acyclic. Pass a typed callback where lower-level code must
   invoke a higher-level coordinator. Cross-domain type-only imports are allowed.
+- Package code is browser-compatible. Node-only adapters live in
+  `packages/<package>/node/`; only they may import `node:*` built-ins and `vite-plus`,
+  and no browser module may import them. Core code receives them as functions
+  (for example a `Bundler`), so it stays usable in the editor.
 - Share filters, pipelines, path resolution, slot rules and sanitization rather
   than copying logic into runtime or builder modules.
 - Keep example HTTP actions in `api/`; component behavior never fetches data.
